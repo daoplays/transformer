@@ -1,33 +1,39 @@
-#include "../eigen_config.h"
-#include <random>
+#pragma once
+#include "attention.h" // Include the file containing the attention_t class
+#include "../utils.h"
+#include <vector>
+#include <cassert>
 
-// Multi-Head Attention class
-// This is the core of the transformer architecture
-class multi_head_attention_t
-{
+class multi_head_attention_t {
 private:
-    int d_model, num_heads;
-    MatrixXf W_q, W_k, W_v, W_o;
+    int d_model, num_heads, d_k;
+    std::vector<attention_t> attention_heads;
+    MatrixXf output_projection;
 
 public:
-    multi_head_attention_t(int d_model, int num_heads) : d_model(d_model), num_heads(num_heads)
-    {
-        // Initialize weights
-        // In practice, these weight matrices allow the model to project
-        // the input into different subspaces for each attention head
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::normal_distribution<> d(0, 0.02);
+    multi_head_attention_t(int d_model, int num_heads) : d_model(d_model), num_heads(num_heads) {
 
-        W_q = MatrixXf::NullaryExpr(d_model, d_model, [&]()
-                                    { return d(gen); });
-        W_k = MatrixXf::NullaryExpr(d_model, d_model, [&]()
-                                    { return d(gen); });
-        W_v = MatrixXf::NullaryExpr(d_model, d_model, [&]()
-                                    { return d(gen); });
-        W_o = MatrixXf::NullaryExpr(d_model, d_model, [&]()
-                                    { return d(gen); });
+        if (d_model % num_heads != 0){
+            die("d_model must be a multiple of num_heads");
+        }
+        
+        d_k = d_model / num_heads;
+        
+        // Create multiple attention heads
+        for (int i = 0; i < num_heads; ++i) {
+            attention_heads.emplace_back(d_k);
+        }
+
+        // Initialize output projection
+        allocate_and_initialize(output_projection, d_model, d_model);
     }
 
     MatrixXf forward(const MatrixXf &X);
+
+    void set_weights(const std::vector<std::array<MatrixXf, 3>>& head_weights, const MatrixXf& out_proj) {
+        for (size_t i = 0; i < attention_heads.size(); ++i) {
+            attention_heads[i].set_weights(head_weights[i][0], head_weights[i][1], head_weights[i][2]);
+        }
+        output_projection = out_proj;
+    }
 };

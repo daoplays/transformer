@@ -1,6 +1,16 @@
 #include "utils.h"
 #include <random>
 #include <cmath>
+#include "logger.h"
+
+void die(const string_t& message)
+{
+    // Print the error message
+    logger::log_error(message);
+
+    // Throw a runtime_error instead of a custom exception
+    throw std::runtime_error(message);
+}
 
 // Softmax function
 // Used in attention mechanism to convert scores to probabilities
@@ -36,7 +46,7 @@ VectorXf softmax(const VectorXf &x)
  * @param matrix The Eigen matrix to initialize
  * @param optional_fan_in The number of input units in the weight tensor
  */
-void he_initialization(Eigen::MatrixXf& matrix, std::optional<int> optional_fan_in ) {
+void he_initialization(Eigen::MatrixXf& matrix, std::optional<int> optional_fan_in = std::nullopt ) {
 
     std::random_device rd;
     std::mt19937 gen(rd());

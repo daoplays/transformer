@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../eigen_config.h"
 #include <vector>
 #include <cmath>
