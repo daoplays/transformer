@@ -3,11 +3,8 @@
 #include <Eigen/Dense>
 #include "../src/transformer/feed_forward.h"  // Assume this contains your feed_forward_t class
 #include <iostream>
+#include "test_utils.h"
 
-// Helper function to check if two Eigen matrices are approximately equal
-bool matrices_approx_equal(const Eigen::MatrixXf& m1, const Eigen::MatrixXf& m2, float epsilon = 1e-5f) {
-    return (m1 - m2).cwiseAbs().maxCoeff() < epsilon;
-}
 
 TEST_CASE("ReLU function", "[relu]") {
     feed_forward_t ff(10, 20);  // Dimensions don't matter for this test

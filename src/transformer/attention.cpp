@@ -1,4 +1,5 @@
 #include "attention.h"
+#include <iostream>
 
 MatrixXf attention_t::forward(const MatrixXf &X)
 {

@@ -68,9 +68,10 @@ void he_initialization(Eigen::MatrixXf& matrix, std::optional<int> optional_fan_
     }
 }
 
-void allocate_and_initialize(Eigen::MatrixXf matrix, int rows, int cols) {
+void allocate_and_initialize(Eigen::MatrixXf& matrix, int rows, int cols) {
     matrix = Eigen::MatrixXf(rows, cols);
     he_initialization(matrix);
+
 }
 
 float relu(float x) {

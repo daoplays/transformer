@@ -3,6 +3,7 @@
 #include "../eigen_config.h"
 #include <random>
 #include "../utils.h"
+#include <iostream>
 
 // Multi-Head Attention class
 // This is the core of the transformer architecture
@@ -19,6 +20,7 @@ public:
         allocate_and_initialize(query_weights, d_model, d_model);
         allocate_and_initialize(key_weights, d_model, d_model);
         allocate_and_initialize(value_weights, d_model, d_model);
+
     }
 
     MatrixXf forward(const MatrixXf &X);
