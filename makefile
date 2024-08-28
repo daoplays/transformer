@@ -40,9 +40,9 @@ OBJS := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(SRCS))
 TEST_OBJS := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(TEST_SRCS))
 
 # Executable names
-TARGET := transformer
-TEST_TARGET := transformer_test
-DEBUG_TARGET := transformer__debug
+TARGET := tform
+TEST_TARGET := tform_test
+DEBUG_TARGET := tform__debug
 
 # Test arguments
 TEST_ARGS ?=

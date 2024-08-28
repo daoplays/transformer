@@ -43,4 +43,4 @@ opt_data/
 results/
 
 # executables
-transformer*
+tform*
