@@ -85,7 +85,6 @@ TEST_CASE("attention_t deterministic test", "[attention]") {
         REQUIRE(output.rows() == expected_output.rows());
         REQUIRE(output.cols() == expected_output.cols());
 
-        std::cout << output << std::endl;
         REQUIRE(matrices_approx_equal(output, expected_output));
 
     }
