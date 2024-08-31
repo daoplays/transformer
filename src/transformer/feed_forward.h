@@ -11,27 +11,36 @@
 class feed_forward_t
 {
 private:
-    MatrixXf W1, W2;
     int d_model, d_ff;
+    MatrixXf W1, W2;
+    VectorXf b1, b2;
 
 public:
     feed_forward_t(int d_model, int d_ff) : d_model(d_model), d_ff(d_ff)
     {
-       allocate_and_initialize(W1, d_model, d_ff);
-       allocate_and_initialize(W2, d_ff, d_model);
+       allocate_and_initialize(W1, d_ff, d_model);
+       allocate_and_initialize(W2, d_model, d_ff);
+
+        b1 = Eigen::VectorXf::Zero(d_ff);
+        b2 = Eigen::VectorXf::Zero(d_model);
+
+
     }
 
     MatrixXf forward(const MatrixXf &X);
 
-    void set_weights(const Eigen::MatrixXf& new_W1, const Eigen::MatrixXf& new_W2) {
+    void set_weights(const Eigen::MatrixXf& new_W1, const Eigen::MatrixXf& new_W2, const Eigen::VectorXf & new_b1, const Eigen::VectorXf &new_b2) {
         // Check if the dimensions of the new weights match the expected dimensions
-        if (new_W1.rows() != d_model || new_W1.cols() != d_ff ||
-            new_W2.rows() != d_ff || new_W2.cols() != d_model) {
-            throw std::invalid_argument("New weights have incorrect dimensions");
+        if (new_W1.rows() != d_ff || new_W1.cols() != d_model ||
+            new_W2.rows() != d_model || new_W2.cols() != d_ff ||
+            new_b1.size() != d_ff || new_b2.size() != d_model) {
+            die("New weights or biases have incorrect dimensions");
         }
 
         // If dimensions are correct, set the new weights
         W1 = new_W1;
         W2 = new_W2;
+        b1 = new_b1;
+        b2 = new_b2;
     }
 };

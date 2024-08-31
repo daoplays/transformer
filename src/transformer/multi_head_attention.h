@@ -30,9 +30,9 @@ public:
 
     MatrixXf forward(const MatrixXf &X);
 
-    void set_weights(const std::vector<std::array<MatrixXf, 3>>& head_weights, const MatrixXf& out_proj) {
+    void set_weights(const std::vector<std::array<MatrixXf, 3>>& head_weights,const std::vector<std::array<MatrixXf, 3>>& head_biases, const MatrixXf& out_proj) {
         for (size_t i = 0; i < attention_heads.size(); ++i) {
-            attention_heads[i].set_weights(head_weights[i][0], head_weights[i][1], head_weights[i][2]);
+            attention_heads[i].set_weights(head_weights[i][0], head_weights[i][1], head_weights[i][2], head_biases[i][0], head_biases[i][1], head_biases[i][2]);
         }
         output_projection = out_proj;
     }

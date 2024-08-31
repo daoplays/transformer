@@ -39,43 +39,33 @@ TEST_CASE("Apply ReLU to matrix", "[apply_relu]") {
     }
 }
 
-TEST_CASE("Feed Forward Network", "[feed_forward]") {
-    int d_model = 4;
-    int d_ff = 8;
+
+TEST_CASE("Feed-Forward matches PyTorch output", "[feed_forward]") {
+    int d_model = 512;
+    int d_ff = 2048;
+    int batch_size = 32;
+    int seq_length = 10;
+
+    // Load weights and biases
+    Eigen::MatrixXf W1 = readMatrixFromFile("tests/test_data/feed_forward/w1.txt", d_ff, d_model);
+    Eigen::VectorXf b1 = readVectorFromFile("tests/test_data/feed_forward/b1.txt");
+    Eigen::MatrixXf W2 = readMatrixFromFile("tests/test_data/feed_forward/w2.txt", d_model, d_ff);
+    Eigen::VectorXf b2 = readVectorFromFile("tests/test_data/feed_forward/b2.txt");
+
+    // Create and initialize feed_forward_t
     feed_forward_t ff(d_model, d_ff);
+    ff.set_weights(W1, W2, b1, b2);
 
-    Eigen::MatrixXf W1(d_model, d_ff);
-    W1 << 0.1f,  0.2f,  0.3f,  0.4f,  0.5f,  0.6f,  0.7f,  0.8f,
-         -0.1f, -0.2f, -0.3f, -0.4f, -0.5f, -0.6f, -0.7f, -0.8f,
-          0.2f,  0.3f,  0.4f,  0.5f,  0.6f,  0.7f,  0.8f,  0.9f,
-         -0.2f, -0.3f, -0.4f, -0.5f, -0.6f, -0.7f, -0.8f, -0.9f;
+    // Load input and expected output
+    Eigen::MatrixXf input = readMatrixFromFile("tests/test_data/feed_forward/input.txt", batch_size * seq_length, d_model);
+    Eigen::MatrixXf expected_output = readMatrixFromFile("tests/test_data/feed_forward/output.txt", batch_size * seq_length, d_model);
 
-    Eigen::MatrixXf W2(d_ff, d_model);
-    W2 << 0.1f,  0.2f,  0.3f,  0.4f,
-         0.2f,  0.3f,  0.4f,  0.5f,
-         0.3f,  0.4f,  0.5f,  0.6f,
-         0.4f,  0.5f,  0.6f,  0.7f,
-        -0.1f, -0.2f, -0.3f, -0.4f,
-        -0.2f, -0.3f, -0.4f, -0.5f,
-        -0.3f, -0.4f, -0.5f, -0.6f,
-        -0.4f, -0.5f, -0.6f, -0.7f;
+    // Run feed-forward
+    Eigen::MatrixXf output = ff.forward(input);
 
-    ff.set_weights(W1, W2);
+    // Compare output with expected output
+    REQUIRE(output.rows() == expected_output.rows());
+    REQUIRE(output.cols() == expected_output.cols());
 
-    SECTION("Forward pass with mixed positive and negative inputs") {
-        Eigen::MatrixXf input(2, d_model);
-        input << 1.0f, -2.0f,  3.0f, -4.0f,
-                -5.0f,  6.0f, -7.0f,  8.0f;
-
-        Eigen::MatrixXf result = ff.forward(input);
-
-        std::cout << result << std::endl;
-
-        // Hardcoded expected output
-        Eigen::MatrixXf expected(2, d_model);
-        expected << -4.0f, -5.6f, -7.2f, -8.8f,
-                     0.0f,  0.0f,  0.0f,  0.0f;
-
-        REQUIRE(matrices_approx_equal(result, expected));
-    }
+    REQUIRE(matrices_approx_equal(output, expected_output));
 }
