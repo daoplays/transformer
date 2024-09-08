@@ -5,7 +5,6 @@ MatrixXf encoder_layer_t::forward(const MatrixXf &X)
     // Self-attention
     MatrixXf attn_output = self_attn.forward(X);
 
-    std::cout << "attn\n" << attn_output << std::endl;
     // Add & Norm
     MatrixXf norm1_output = norm1.forward(X + attn_output);
 

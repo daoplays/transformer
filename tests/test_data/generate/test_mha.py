@@ -12,12 +12,11 @@ def print_tensor(name, tensor):
     print(f"{name}:\n{tensor.detach().numpy()}\n")
 
 def save_tensor(name, tensor):
-    return
     np.savetxt(f'{name}.txt', tensor.detach().numpy(), fmt='%.9f')  # Changed to space-separated
 
 # Set parameters
 d_model = 8
-num_heads = 1
+num_heads = 2
 seq_length = 10
 
 # Create PyTorch MultiheadAttention

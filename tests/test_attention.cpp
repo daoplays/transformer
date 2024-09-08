@@ -48,7 +48,7 @@ TEST_CASE("Attention Forward Pass", "[attention]") {
 
 TEST_CASE("Multi-Head Attention matches PyTorch output", "[multi_head_attention]") {
     int d_model = 8;
-    int num_heads = 1;
+    int num_heads = 2;
     int seq_length = 10;
 
     // Create multi-head attention layer
