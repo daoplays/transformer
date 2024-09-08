@@ -7,8 +7,12 @@
 class multi_head_attention_t {
 private:
     int d_model, num_heads, d_k;
-    std::vector<attention_t> attention_heads;
+    attention_t attention_head;
+    MatrixXf query_weights, key_weights, value_weights;
+    VectorXf query_bias, key_bias, value_bias;
     MatrixXf output_projection;
+    VectorXf output_bias;
+    float scale_factor;
 
 public:
     multi_head_attention_t(int d_model, int num_heads) : d_model(d_model), num_heads(num_heads) {
@@ -19,21 +23,45 @@ public:
         
         d_k = d_model / num_heads;
         
-        // Create multiple attention heads
-        for (int i = 0; i < num_heads; ++i) {
-            attention_heads.emplace_back(d_k);
-        }
+       
+        // Initialize matrices
+        allocate_and_initialize(query_weights, d_model, d_model);
+        allocate_and_initialize(key_weights, d_model, d_model);
+        allocate_and_initialize(value_weights, d_model, d_model);
 
-        // Initialize output projection
         allocate_and_initialize(output_projection, d_model, d_model);
+
+        query_bias = Eigen::VectorXf::Zero(d_model);
+        key_bias = Eigen::VectorXf::Zero(d_model);
+        value_bias = Eigen::VectorXf::Zero(d_model);
+
+        output_bias = Eigen::VectorXf::Zero(d_model);
+        scale_factor = 1.0f / std::sqrt(static_cast<float>(d_k));
+
     }
 
     MatrixXf forward(const MatrixXf &X);
 
-    void set_weights(const std::vector<std::array<MatrixXf, 3>>& head_weights,const std::vector<std::array<MatrixXf, 3>>& head_biases, const MatrixXf& out_proj) {
-        for (size_t i = 0; i < attention_heads.size(); ++i) {
-            attention_heads[i].set_weights(head_weights[i][0], head_weights[i][1], head_weights[i][2], head_biases[i][0], head_biases[i][1], head_biases[i][2]);
-        }
+    void set_weights(const MatrixXf& q_weights, const MatrixXf& k_weights, const MatrixXf& v_weights,
+                     const VectorXf& q_bias, const VectorXf& k_bias, const VectorXf& v_bias,
+                     const MatrixXf& out_proj, const VectorXf& out_bias) {
+        query_weights = q_weights;
+        key_weights = k_weights;
+        value_weights = v_weights;
+        query_bias = q_bias;
+        key_bias = k_bias;
+        value_bias = v_bias;
         output_projection = out_proj;
+        output_bias = out_bias;
+
+        // Sanity checks
+        assert(query_weights.rows() == d_model && query_weights.cols() == d_model);
+        assert(key_weights.rows() == d_model && key_weights.cols() == d_model);
+        assert(value_weights.rows() == d_model && value_weights.cols() == d_model);
+        assert(query_bias.size() == d_model);
+        assert(key_bias.size() == d_model);
+        assert(value_bias.size() == d_model);
+        assert(output_projection.rows() == d_model && output_projection.cols() == d_model);
+        assert(output_bias.size() == d_model);
     }
 };
