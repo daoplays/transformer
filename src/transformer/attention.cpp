@@ -1,14 +1,13 @@
 #include "attention.h"
 #include <iostream>
 
-MatrixXf attention_t::forward(const MatrixXf &Q, const MatrixXf &K, const MatrixXf &V)
+MatrixXf attention_t::forward(const MatrixXf& Q, const MatrixXf& K, const MatrixXf& V)
 {
 
     int d_model = Q.cols();
     // Compute attention scores
     // This step allows each position to attend to all other positions
     MatrixXf scores = Q * K.transpose() / std::sqrt(d_model);
-
 
     // Apply softmax to get attention weights
     // This converts scores to probabilities, allowing for a weighted sum

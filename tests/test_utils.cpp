@@ -1,17 +1,19 @@
 #include "test_utils.h"
-#include "../src/utils.h"
-#include <fstream>
 #include <filesystem>
+#include <fstream>
+#include "../src/utils.h"
 
-bool matrices_approx_equal(const Eigen::MatrixXf& m1, const Eigen::MatrixXf& m2, float epsilon) {
+bool matrices_approx_equal(const Eigen::MatrixXf& m1, const Eigen::MatrixXf& m2, float epsilon)
+{
     return (m1 - m2).cwiseAbs().maxCoeff() < epsilon;
 }
 
-Eigen::MatrixXf readMatrixFromFile(const std::string& filename, int rows, int cols) {
+Eigen::MatrixXf readMatrixFromFile(const std::string& filename, int rows, int cols)
+{
     if (!std::filesystem::exists(filename)) {
         throw std::runtime_error("File " + filename + " does not exist");
     }
-    
+
     std::ifstream file(filename);
     if (!file.is_open()) {
         throw std::runtime_error("Could not open file " + filename);
@@ -32,7 +34,9 @@ Eigen::MatrixXf readMatrixFromFile(const std::string& filename, int rows, int co
     }
     return matrix;
 }
-Eigen::VectorXf readVectorFromFile(const std::string& filename) {
+
+Eigen::VectorXf readVectorFromFile(const std::string& filename)
+{
 
     if (!std::filesystem::exists(filename)) {
         die("file " + filename + " does not exist");

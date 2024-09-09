@@ -1,13 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include "../src/transformer/multi_head_attention.h"
-#include "../src/eigen_config.h"
 #include <random>
+#include "../src/eigen_config.h"
+#include "../src/transformer/multi_head_attention.h"
 #include "test_utils.h"
 
-
-
-TEST_CASE("Attention Forward Pass", "[attention]") {
+TEST_CASE("Attention Forward Pass", "[attention]")
+{
     int d_model = 512;
     int seq_length = 10;
 
@@ -41,14 +40,12 @@ TEST_CASE("Attention Forward Pass", "[attention]") {
     REQUIRE(output.cols() == expected_output.cols());
 
     REQUIRE(matrices_approx_equal(output, expected_output));
-
-
 }
 
-
-TEST_CASE("Multi-Head Attention matches PyTorch output", "[multi_head_attention]") {
-    int d_model = 8;
-    int num_heads = 2;
+TEST_CASE("Multi-Head Attention matches PyTorch output", "[multi_head_attention]")
+{
+    int d_model = 512;
+    int num_heads = 8;
     int seq_length = 10;
 
     // Create multi-head attention layer
@@ -64,16 +61,13 @@ TEST_CASE("Multi-Head Attention matches PyTorch output", "[multi_head_attention]
     Eigen::MatrixXf query_weights = in_proj_weight.block(0, 0, d_model, d_model);
     Eigen::MatrixXf key_weights = in_proj_weight.block(d_model, 0, d_model, d_model);
     Eigen::MatrixXf value_weights = in_proj_weight.block(2 * d_model, 0, d_model, d_model);
-    
+
     Eigen::VectorXf query_bias = in_proj_bias.segment(0, d_model);
     Eigen::VectorXf key_bias = in_proj_bias.segment(d_model, d_model);
     Eigen::VectorXf value_bias = in_proj_bias.segment(2 * d_model, d_model);
 
-
     // Set weights and biases
-    mha.set_weights(query_weights, key_weights, value_weights, 
-                    query_bias, key_bias, value_bias, 
-                    out_proj_weight, out_proj_bias);
+    mha.set_weights(query_weights, key_weights, value_weights, query_bias, key_bias, value_bias, out_proj_weight, out_proj_bias);
 
     // Load input
     Eigen::MatrixXf input = readMatrixFromFile("tests/test_data/multi_head_attention/mha_input.txt", seq_length, d_model);
@@ -83,9 +77,6 @@ TEST_CASE("Multi-Head Attention matches PyTorch output", "[multi_head_attention]
 
     // Load expected output
     Eigen::MatrixXf expected_output = readMatrixFromFile("tests/test_data/multi_head_attention/mha_output.txt", seq_length, d_model);
-
-    std::cout << "\n\nOutput:\n" << output << std::endl;
-    std::cout << "\n\nExpected Output:\n" << expected_output << std::endl;
 
     // Compare output with expected output
     REQUIRE(output.rows() == expected_output.rows());

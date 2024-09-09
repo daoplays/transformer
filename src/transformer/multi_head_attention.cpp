@@ -1,7 +1,7 @@
-#include "multi_head_attention.h" 
+#include "multi_head_attention.h"
 
-
-MatrixXf multi_head_attention_t::forward(const MatrixXf &X) {
+MatrixXf multi_head_attention_t::forward(const MatrixXf& X)
+{
     int seq_len = X.rows();
 
     // Compute Q, K, V for all heads at once
@@ -9,8 +9,7 @@ MatrixXf multi_head_attention_t::forward(const MatrixXf &X) {
     MatrixXf K = (X * key_weights.transpose()).rowwise() + key_bias.transpose();
     MatrixXf V = (X * value_weights.transpose()).rowwise() + value_bias.transpose();
 
-    
-   // Split Q, K, V for each head
+    // Split Q, K, V for each head
     std::vector<MatrixXf> Q_heads, K_heads, V_heads;
     for (int i = 0; i < num_heads; ++i) {
         Q_heads.push_back(Q.block(0, i * d_k, seq_len, d_k));

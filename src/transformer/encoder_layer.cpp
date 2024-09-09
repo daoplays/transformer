@@ -1,6 +1,6 @@
 #include "encoder_layer.h"
 
-MatrixXf encoder_layer_t::forward(const MatrixXf &X)
+MatrixXf encoder_layer_t::forward(const MatrixXf& X)
 {
     // Self-attention
     MatrixXf attn_output = self_attn.forward(X);
@@ -10,6 +10,7 @@ MatrixXf encoder_layer_t::forward(const MatrixXf &X)
 
     // Feed-forward
     MatrixXf ff_output = ff.forward(norm1_output);
+
     // Add & Norm
     MatrixXf norm2_output = norm2.forward(norm1_output + ff_output);
 

@@ -1,11 +1,12 @@
 #pragma once
-#include "attention.h" // Include the file containing the attention_t class
-#include "../utils.h"
-#include <vector>
 #include <cassert>
+#include <vector>
+#include "../utils.h"
+#include "attention.h"  // Include the file containing the attention_t class
 
 class multi_head_attention_t {
 private:
+
     int d_model, num_heads, d_k;
     attention_t attention_head;
     MatrixXf query_weights, key_weights, value_weights;
@@ -15,15 +16,16 @@ private:
     float scale_factor;
 
 public:
-    multi_head_attention_t(int d_model, int num_heads) : d_model(d_model), num_heads(num_heads) {
 
-        if (d_model % num_heads != 0){
+    multi_head_attention_t(int d_model, int num_heads) : d_model(d_model), num_heads(num_heads)
+    {
+
+        if (d_model % num_heads != 0) {
             die("d_model must be a multiple of num_heads");
         }
-        
+
         d_k = d_model / num_heads;
-        
-       
+
         // Initialize matrices
         allocate_and_initialize(query_weights, d_model, d_model);
         allocate_and_initialize(key_weights, d_model, d_model);
@@ -37,14 +39,13 @@ public:
 
         output_bias = Eigen::VectorXf::Zero(d_model);
         scale_factor = 1.0f / std::sqrt(static_cast<float>(d_k));
-
     }
 
-    MatrixXf forward(const MatrixXf &X);
+    MatrixXf forward(const MatrixXf& X);
 
-    void set_weights(const MatrixXf& q_weights, const MatrixXf& k_weights, const MatrixXf& v_weights,
-                     const VectorXf& q_bias, const VectorXf& k_bias, const VectorXf& v_bias,
-                     const MatrixXf& out_proj, const VectorXf& out_bias) {
+    void set_weights(const MatrixXf& q_weights, const MatrixXf& k_weights, const MatrixXf& v_weights, const VectorXf& q_bias, const VectorXf& k_bias,
+                     const VectorXf& v_bias, const MatrixXf& out_proj, const VectorXf& out_bias)
+    {
         query_weights = q_weights;
         key_weights = k_weights;
         value_weights = v_weights;

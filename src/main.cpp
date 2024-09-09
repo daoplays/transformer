@@ -1,12 +1,12 @@
 #include <iostream>
+#include "argument_parser.h"
 #include "eigen_config.h"
 #include "transformer/transformer.h"
-#include "argument_parser.h"
 
 int main(int argc, char* argv[])
 {
 
-     argument_parser_t parser;
+    argument_parser_t parser;
 
     // if arguments cannot be parsed, we print the help message and exit
     if (!parser.parse(argc, argv) || args::help) {
@@ -15,11 +15,11 @@ int main(int argc, char* argv[])
     }
 
     // Hyperparameters
-    int d_model = 512;  // Dimensionality of the model
-    int num_heads = 8;  // Number of attention heads
-    int d_ff = 2048;    // Dimensionality of feed-forward layer
-    int num_layers = 6; // Number of encoder layers
-    int seq_len = 10;   // Sequence length
+    int d_model = 512;   // Dimensionality of the model
+    int num_heads = 8;   // Number of attention heads
+    int d_ff = 2048;     // Dimensionality of feed-forward layer
+    int num_layers = 6;  // Number of encoder layers
+    int seq_len = 10;    // Sequence length
 
     // Create transformer
     transformer_t transformer(num_layers, d_model, num_heads, d_ff);
