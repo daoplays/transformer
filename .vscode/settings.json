@@ -72,6 +72,10 @@
     "source_location": "cpp",
     "format": "cpp",
     "fstream": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "any": "cpp",
+    "forward_list": "cpp",
+    "ranges": "cpp",
+    "valarray": "cpp"
   }
 }

@@ -28,7 +28,8 @@ LDFLAGS += -lm -lpthread -ldl
 # Source files
 COMMON_SRC := $(wildcard src/transformer/*.cpp) \
  		      $(wildcard src/types/*.cpp) \
-              src/utils.cpp src/argument_parser.cpp src/logger.cpp
+              src/utils.cpp src/argument_parser.cpp src/logger.cpp \
+			  src/vocab.cpp
                
 
 SRCS := src/main.cpp $(COMMON_SRC)
