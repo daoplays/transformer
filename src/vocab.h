@@ -21,11 +21,11 @@ class tokenizer_t {
 private:
 
     // Encoder: maps tokens to IDs
-    std::map<std::u32string, int> encoder;
+    std::map<std::string, int> encoder;
     // Decoder: maps IDs back to tokens
-    std::map<int, std::u32string> decoder;
+    std::map<int, std::string> decoder;
     // BPE ranks: stores the priority of merge operations
-    std::vector<std::pair<std::u32string, std::u32string>> bpe_ranks;
+    std::vector<std::pair<std::string, std::string>> bpe_ranks;
     // Regex pattern for tokenization
     std::regex pat;
     // Byte-to-unicode mapping
@@ -34,7 +34,7 @@ private:
     std::map<uint8_t, char32_t> bytes_to_unicode();
 
     // Function to find the rank of a pair
-    int get_pair_rank(const std::u32string& first, const std::u32string& second);
+    int get_pair_rank(const std::string& first, const std::string& second);
 
     std::vector<std::u32string> bpe(const std::u32string& token);
 
