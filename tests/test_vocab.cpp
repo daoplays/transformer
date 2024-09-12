@@ -36,7 +36,7 @@ TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]"
     std::vector<int> expected_tokens = {38, 11571, 17, 318, 257, 2746, 4166, 416, 4946, 20185};
     REQUIRE(tokens == expected_tokens);
 
-    GPT2_Weights gpt_weights = load_embeddings("/home/ltl/Documents/machine_learning/gpt2/tf_model.h5");
+    GPT2_Weights gpt_weights = load_embeddings("gpt2/tf_model.h5");
 
     REQUIRE(gpt_weights.token_embedding.rows() == 50257);
     REQUIRE(gpt_weights.token_embedding.cols() == 768);
