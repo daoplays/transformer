@@ -21,11 +21,11 @@ class tokenizer_t {
 private:
 
     // Encoder: maps tokens to IDs
-    std::map<std::string, int> encoder;
+    std::map<string_t, int> encoder;
     // Decoder: maps IDs back to tokens
-    std::map<int, std::string> decoder;
+    std::map<int, string_t> decoder;
     // BPE ranks: stores the priority of merge operations
-    std::vector<std::pair<std::string, std::string>> bpe_ranks;
+    std::vector<std::pair<string_t, string_t>> bpe_ranks;
     // Regex pattern for tokenization
     std::regex pat;
     // Byte-to-unicode mapping
@@ -34,18 +34,18 @@ private:
     std::map<uint8_t, char32_t> bytes_to_unicode();
 
     // Function to find the rank of a pair
-    int get_pair_rank(const std::string& first, const std::string& second);
+    int get_pair_rank(const string_t& first, const string_t& second);
 
-    std::vector<std::string> bpe(const std::u32string& token);
+    std::vector<string_t> bpe(const std::u32string& token);
 
     // UTF-8 to UTF-32 conversion using standard C++
-    std::u32string utf8_to_utf32(const std::string& utf8_string)
+    std::u32string utf8_to_utf32(const string_t& utf8_string)
     {
         std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
         return converter.from_bytes(utf8_string);
     }
 
-    std::string utf32_to_utf8(const std::u32string& input)
+    string_t utf32_to_utf8(const std::u32string& input)
     {
         std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
         return converter.to_bytes(input);
@@ -53,11 +53,11 @@ private:
 
 public:
 
-    tokenizer_t(const std::string& vocab_file, const std::string& merges_file);
+    tokenizer_t(const string_t& vocab_file, const string_t& merges_file);
 
     // Tokenize input text
-    std::vector<int> tokenize(const std::string& text);
-    std::vector<std::string> detokenize(const std::vector<int>& tokens);
+    std::vector<int> tokenize(const string_t& text);
+    std::vector<string_t> detokenize(const std::vector<int>& tokens);
 
     // helper functions for testing
     int get_vocab_size() { return encoder.size(); };

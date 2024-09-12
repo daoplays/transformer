@@ -7,7 +7,7 @@
 #include "types/basic_types.h"
 #include "utils.h"
 
-tokenizer_t::tokenizer_t(const std::string& vocab_file, const std::string& merges_file)
+tokenizer_t::tokenizer_t(const string_t& vocab_file, const string_t& merges_file)
 {
     // Load vocabulary from JSON file
     std::ifstream vocab_stream(vocab_file);
@@ -21,7 +21,7 @@ tokenizer_t::tokenizer_t(const std::string& vocab_file, const std::string& merge
 
     // Load BPE merges from text file
     std::ifstream merges_stream(merges_file);
-    std::string line;
+    string_t line;
     std::getline(merges_stream, line);  // Skip first line (header)
 
     while (std::getline(merges_stream, line)) {
@@ -30,12 +30,12 @@ tokenizer_t::tokenizer_t(const std::string& vocab_file, const std::string& merge
         }
 
         size_t split_pos = line.find(' ');
-        if (split_pos == std::string::npos) {
+        if (split_pos == string_t::npos) {
             die("Invalid line in merges file: " + line);
         }
 
-        std::string first = line.substr(0, split_pos);
-        std::string second = line.substr(split_pos + 1);
+        string_t first = line.substr(0, split_pos);
+        string_t second = line.substr(split_pos + 1);
 
         // Add to bpe_ranks
         bpe_ranks.emplace_back(first, second);
@@ -92,7 +92,7 @@ std::map<uint8_t, char32_t> tokenizer_t::bytes_to_unicode()
     // 5. This specific implementation ensures compatibility with pre-trained GPT-2 models.
 }
 
-int tokenizer_t::get_pair_rank(const std::string& first, const std::string& second)
+int tokenizer_t::get_pair_rank(const string_t& first, const string_t& second)
 {
     auto it = std::find(bpe_ranks.begin(), bpe_ranks.end(), std::make_pair(first, second));
     if (it != bpe_ranks.end()) {
@@ -101,7 +101,7 @@ int tokenizer_t::get_pair_rank(const std::string& first, const std::string& seco
     return -1;  // Pair not found
 }
 
-std::vector<std::string> tokenizer_t::bpe(const std::u32string& token)
+std::vector<string_t> tokenizer_t::bpe(const std::u32string& token)
 {
     // Initialize a vector of UTF-32 strings. Each string it just a single character from the input token
     std::vector<std::u32string> word;
@@ -149,7 +149,7 @@ std::vector<std::string> tokenizer_t::bpe(const std::u32string& token)
     }
 
     // Convert the final word vector from UTF-32 to UTF-8
-    std::vector<std::string> result;
+    std::vector<string_t> result;
     for (const std::u32string& w : word) {
         result.push_back(utf32_to_utf8(w));
     }
@@ -158,7 +158,7 @@ std::vector<std::string> tokenizer_t::bpe(const std::u32string& token)
 }
 
 // Tokenize input text
-std::vector<int> tokenizer_t::tokenize(const std::string& text)
+std::vector<int> tokenizer_t::tokenize(const string_t& text)
 {
     std::vector<int> tokens;
 
@@ -167,7 +167,7 @@ std::vector<int> tokenizer_t::tokenize(const std::string& text)
     std::sregex_iterator end_iter;  // Default constructor creates a past-the-end iterator
 
     while (iter != end_iter) {
-        std::string utf8_token = iter->str();
+        string_t utf8_token = iter->str();
 
         // Apply byte-level encoding
         std::u32string utf32_token;
@@ -176,8 +176,8 @@ std::vector<int> tokenizer_t::tokenize(const std::string& text)
         }
 
         // Apply BPE encoding
-        std::vector<std::string> bpe_encoded = bpe(utf32_token);
-        for (const std::string& bpe_token : bpe_encoded) {
+        std::vector<string_t> bpe_encoded = bpe(utf32_token);
+        for (const string_t& bpe_token : bpe_encoded) {
             int token_id = encoder.at(bpe_token);
             tokens.push_back(token_id);
         }
@@ -190,7 +190,7 @@ std::vector<int> tokenizer_t::tokenize(const std::string& text)
 }
 
 // Helper function to convert tokens back to text (for debugging)
-std::vector<std::string> tokenizer_t::detokenize(const std::vector<int>& tokens)
+std::vector<string_t> tokenizer_t::detokenize(const std::vector<int>& tokens)
 {
     std::vector<string_t> result;
     for (int token : tokens) {
