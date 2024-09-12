@@ -6,40 +6,31 @@
 
 TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]")
 {
-    string_t gpt2_vocab_path = "gpt2/vocab.json";
+    // Initialize tokenizer_t with vocabulary and merges files
+    tokenizer_t tokenizer("gpt2/vocab.json", "gpt2/merges.txt");
 
-    REQUIRE_NOTHROW([&]() {
-        auto vocab = load_vocab(gpt2_vocab_path);
+    // GPT-2 vocabulary size is 50257
+    REQUIRE(tokenizer.get_vocab_size() == 50257);
+    // GPT-2 mergers size is 50000
+    REQUIRE(tokenizer.get_mergers_size() == 50000);
 
-        // GPT-2 vocabulary size is 50257
-        REQUIRE(vocab.size() == 50257);
+    // Check some specific tokens
+    CHECK(tokenizer.tokenize("Twitter")[0] == 14254);
+    CHECK(tokenizer.tokenize("Bitcoin")[0] == 22614);
 
-        // Check some specific tokens
-        CHECK(vocab["<|endoftext|>"] == 50256);  // Special token, should be the last one
-        CHECK(vocab["Twitter"] == 14254);
-        CHECK(vocab["Bitcoin"] == 22614);
+    CHECK(tokenizer.tokenize("!")[0] == 0);
+    CHECK(tokenizer.tokenize("~")[0] == 93);
 
-        CHECK(vocab["!"] == 0);
-        CHECK(vocab["~"] == 93);
+    // Example text to tokenize
+    std::string text = "GPT2 is a model developed by OpenAI";
+    // Tokenize the text
+    std::vector<int> tokens = tokenizer.tokenize(text);
+    std::vector<string_t> detokenized = tokenizer.detokenize(tokens);
+    for (size_t i = 0; i < tokens.size(); i++) {
+        std::cout << tokens[i] << " " << detokenized[i] << std::endl;
+    }
 
-        // Verify that all keys are strings and all values are unique integers
-        std::set<int> unique_values;
-        std::map<int, std::vector<std::string>> id_to_tokens;
-        for (const auto& [token, id] : vocab) {
-            unique_values.insert(id);
-            id_to_tokens[id].push_back(token);
-        }
-
-        // Print out any duplicate entries
-        for (const auto& [id, tokens] : id_to_tokens) {
-            if (tokens.size() > 1) {
-                std::cout << "Duplicate ID " << id << " for tokens: ";
-                for (const auto& token : tokens) {
-                    std::cout << "'" << token << "' ";
-                }
-                std::cout << std::endl;
-            }
-        }
-        CHECK(unique_values.size() == vocab.size());
-    }());
+    // expected tokens from the hugging face python api
+    std::vector<int> expected_tokens = {38, 11571, 17, 318, 257, 2746, 4166, 416, 4946, 20185};
+    REQUIRE(tokens == expected_tokens);
 }
