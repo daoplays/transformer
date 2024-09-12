@@ -14,22 +14,23 @@ CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic -Wno-deprecated-declarations -g -
 # Catch2 paths (adjust if necessary)
 CATCH2_INC := /usr/local/include
 CATCH2_LIB := /usr/local/lib
-
+H5_LIB := /usr/lib/x86_64-linux-gnu/hdf5/serial
+H5_INC := /usr/lib/x86_64-linux-gnu/hdf5/serial/include
 EIGEN_INC := /usr/include/eigen3
 
 # Include flags
-INCLUDES := -I$(BOOST_INC) -I$(CATCH2_INC) -I$(EIGEN_INC) -Isrc
+INCLUDES := -I$(BOOST_INC) -I$(CATCH2_INC) -I$(EIGEN_INC) -I$(H5_INC) -Isrc
 
 # Library flags
 LDFLAGS := -L$(BOOST_LIB) -L$(CATCH2_LIB)  -lCatch2Main -lCatch2
 LDFLAGS +=  -lboost_program_options -fopenmp
-LDFLAGS += -lm -lpthread -ldl
+LDFLAGS += -lm -lpthread -ldl -L$(H5_LIB) -lhdf5_cpp -lhdf5
 
 # Source files
 COMMON_SRC := $(wildcard src/transformer/*.cpp) \
  		      $(wildcard src/types/*.cpp) \
               src/utils.cpp src/argument_parser.cpp src/logger.cpp \
-			  src/vocab.cpp
+			  src/vocab.cpp src/load_h5.cpp
                
 
 SRCS := src/main.cpp $(COMMON_SRC)

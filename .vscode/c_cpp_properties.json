@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/include/eigen3/"
+                "/usr/include/eigen3/",
+                "/usr/lib/x86_64-linux-gnu/hdf5/serial/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
