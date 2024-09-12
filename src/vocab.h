@@ -36,7 +36,7 @@ private:
     // Function to find the rank of a pair
     int get_pair_rank(const std::string& first, const std::string& second);
 
-    std::vector<std::u32string> bpe(const std::u32string& token);
+    std::vector<std::string> bpe(const std::u32string& token);
 
     // UTF-8 to UTF-32 conversion using standard C++
     std::u32string utf8_to_utf32(const std::string& utf8_string)

@@ -14,7 +14,6 @@ tokenizer_t::tokenizer_t(const std::string& vocab_file, const std::string& merge
     json vocab_json;
     vocab_stream >> vocab_json;
     for (auto it = vocab_json.begin(); it != vocab_json.end(); ++it) {
-        std::u32string token = utf8_to_utf32(it.key());
         int id = it.value();
         encoder[it.key()] = id;
         decoder[id] = it.key();
@@ -35,12 +34,8 @@ tokenizer_t::tokenizer_t(const std::string& vocab_file, const std::string& merge
             die("Invalid line in merges file: " + line);
         }
 
-        std::string first_utf8 = line.substr(0, split_pos);
-        std::string second_utf8 = line.substr(split_pos + 1);
-
-        // Convert UTF-8 strings to UTF-32
-        std::string first = first_utf8;
-        std::string second = second_utf8;
+        std::string first = line.substr(0, split_pos);
+        std::string second = line.substr(split_pos + 1);
 
         // Add to bpe_ranks
         bpe_ranks.emplace_back(first, second);
@@ -106,45 +101,57 @@ int tokenizer_t::get_pair_rank(const std::string& first, const std::string& seco
     return -1;  // Pair not found
 }
 
-std::vector<std::u32string> tokenizer_t::bpe(const std::u32string& token)
+std::vector<std::string> tokenizer_t::bpe(const std::u32string& token)
 {
+    // Initialize a vector of UTF-32 strings. Each string it just a single character from the input token
     std::vector<std::u32string> word;
     word.reserve(token.size());
     for (char32_t c : token) {
         word.push_back(std::u32string(1, c));
     }
 
+    // Main BPE loop
     while (true) {
         std::pair<std::u32string, std::u32string> best_pair;
         int best_rank = -1;
 
+        // Find the best pair to merge based on rank
         for (size_t i = 0; i < word.size() - 1; ++i) {
+            // Get the rank of the current pair
             int rank = get_pair_rank(utf32_to_utf8(word[i]), utf32_to_utf8(word[i + 1]));
+            // Update best_pair and best_rank if this pair is better
             if (rank != -1 && (best_rank == -1 || rank < best_rank)) {
                 best_pair = {word[i], word[i + 1]};
                 best_rank = rank;
             }
         }
+
+        // If no mergeable pair found, exit the loop
         if (best_rank == -1) {
             break;
         }
 
+        // Merge the best pair in the word
         std::vector<std::u32string> new_word;
         for (size_t i = 0; i < word.size(); ++i) {
             if (i < word.size() - 1 && word[i] == best_pair.first && word[i + 1] == best_pair.second) {
+                // Merge the pair
                 new_word.push_back(best_pair.first + best_pair.second);
-                ++i;
+                ++i;  // Skip the next token as it's now merged
             } else {
+                // Keep the token as is
                 new_word.push_back(word[i]);
             }
         }
 
+        // Update word with the new merged version
         word = std::move(new_word);
     }
 
-    std::vector<std::u32string> result;
-    for (const auto& w : word) {
-        result.push_back(w);
+    // Convert the final word vector from UTF-32 to UTF-8
+    std::vector<std::string> result;
+    for (const std::u32string& w : word) {
+        result.push_back(utf32_to_utf8(w));
     }
 
     return result;
@@ -157,29 +164,26 @@ std::vector<int> tokenizer_t::tokenize(const std::string& text)
 
     // Use regex to split text into initial tokens
     std::sregex_iterator iter(text.begin(), text.end(), pat);
-    std::sregex_iterator end;
+    std::sregex_iterator end_iter;  // Default constructor creates a past-the-end iterator
 
-    for (; iter != end; ++iter) {
-        std::string token = iter->str();
-        std::u32string utf32_token = utf8_to_utf32(token);
+    while (iter != end_iter) {
+        std::string utf8_token = iter->str();
 
         // Apply byte-level encoding
-        std::string byte_encoded;
-        for (char32_t c : utf32_token) {
-            byte_encoded += byte_encoder[static_cast<uint8_t>(c)];
-        }
-
-        std::u32string output;
-        for (uint8_t b : token) {
-            output += byte_encoder.at(b);
+        std::u32string utf32_token;
+        for (uint8_t b : utf8_token) {
+            utf32_token += byte_encoder.at(b);
         }
 
         // Apply BPE encoding
-        std::vector<std::u32string> bpe_encoded = bpe(output);
-        for (const std::u32string& token : bpe_encoded) {
-            int token_id = encoder.at(utf32_to_utf8(token));
+        std::vector<std::string> bpe_encoded = bpe(utf32_token);
+        for (const std::string& bpe_token : bpe_encoded) {
+            int token_id = encoder.at(bpe_token);
             tokens.push_back(token_id);
         }
+
+        // Move to the next regex match
+        ++iter;
     }
 
     return tokens;
