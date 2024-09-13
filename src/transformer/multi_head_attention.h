@@ -15,6 +15,9 @@ private:
     VectorXf output_bias;
     float scale_factor;
 
+    MatrixXf qkv_weights;
+    VectorXf qkv_bias;
+
 public:
 
     multi_head_attention_t(int d_model, int num_heads) : d_model(d_model), num_heads(num_heads)
@@ -39,9 +42,14 @@ public:
 
         output_bias = Eigen::VectorXf::Zero(d_model);
         scale_factor = 1.0f / std::sqrt(static_cast<float>(d_k));
+
+        allocate_and_initialize(qkv_weights, d_model, 3 * d_model);
+        qkv_bias = Eigen::VectorXf::Zero(3 * d_model);
+
     }
 
     MatrixXf forward(const MatrixXf& X);
+    MatrixXf forward2(const MatrixXf& X);
 
     void set_weights(const MatrixXf& q_weights, const MatrixXf& k_weights, const MatrixXf& v_weights, const VectorXf& q_bias, const VectorXf& k_bias,
                      const VectorXf& v_bias, const MatrixXf& out_proj, const VectorXf& out_bias)
@@ -64,5 +72,17 @@ public:
         assert(value_bias.size() == d_model);
         assert(output_projection.rows() == d_model && output_projection.cols() == d_model);
         assert(output_bias.size() == d_model);
+    }
+
+    void set_weights2(const MatrixXf& _qkv_weights,  const VectorXf& _qkv_bias, const MatrixXf& out_proj, const VectorXf& out_bias)
+    {
+        qkv_weights = _qkv_weights;
+        qkv_bias = _qkv_bias;
+       
+        output_projection = out_proj;
+        output_bias = out_bias;
+
+        // Sanity checks
+       
     }
 };

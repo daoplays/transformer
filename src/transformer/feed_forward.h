@@ -28,6 +28,7 @@ public:
     }
 
     MatrixXf forward(const MatrixXf& X);
+    MatrixXf forward2(const MatrixXf& X);
 
     void set_weights(const Eigen::MatrixXf& new_W1, const Eigen::MatrixXf& new_W2, const Eigen::VectorXf& new_b1, const Eigen::VectorXf& new_b2)
     {

@@ -1,55 +1,122 @@
-from transformers import GPT2Tokenizer, GPT2Model
+from transformers import GPT2Tokenizer, GPT2Model, GPT2LMHeadModel
 import torch
+import torch.nn as nn
+import math
 
-def read_weights_h5(file_path):
-     with h5py.File(file_path, 'r') as f:
-         # Print the structure of the file
-         def print_structure(name, obj):
-             print(name, obj)
-         f.visititems(print_structure)
- 
-         # Example of reading a specific weight
-         wte = np.array(f['/transformer/tfgp_t2lm_head_model/transformer/wte/weight:0'])
-         print("Token embedding shape:", wte.shape)
 
+class GPT2ModelWithIntermediates(GPT2Model):
+    def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None):
+        intermediates = {}
+        
+        input_shape = input_ids.size()
+        input_ids = input_ids.view(-1, input_shape[-1])
+        batch_size = input_ids.shape[0]
+
+        if position_ids is None:
+            position_ids = torch.arange(0, input_shape[-1], dtype=torch.long, device=input_ids.device)
+            position_ids = position_ids.unsqueeze(0).view(-1, input_shape[-1])
+
+        inputs_embeds = self.wte(input_ids)
+        position_embeds = self.wpe(position_ids)
+        
+        intermediates['token_embeddings'] = inputs_embeds.detach()
+        intermediates['position_embeddings'] = position_embeds.detach()
+        
+        hidden_states = inputs_embeds + position_embeds
+        intermediates['combined_embeddings'] = hidden_states.detach()
+
+        if token_type_ids is not None:
+            token_type_embeds = self.wte(token_type_ids)
+            hidden_states = hidden_states + token_type_embeds
+
+        hidden_states = self.drop(hidden_states)
+
+        output_shape = input_shape + (hidden_states.size(-1),)
+
+        for i, block in enumerate(self.h):
+            
+            
+            residual = hidden_states
+            hidden_states = block.ln_1(hidden_states)
+            intermediates[f'layer_{i}_after_ln_1'] = hidden_states.detach()
+
+            attn_outputs = block.attn(
+                hidden_states,
+                layer_past=None,
+                attention_mask=attention_mask,
+                head_mask=None,
+                use_cache=False,
+                output_attentions=True
+            )
+            attn_output = attn_outputs[0]  # output_attn: a, present, (attentions)
+            intermediates[f'layer_{i}_attention_output'] = attn_output.detach()
+
+            hidden_states = attn_output + residual
+            intermediates[f'layer_{i}_after_attention'] = hidden_states.detach()
+
+            residual = hidden_states
+            hidden_states = block.ln_2(hidden_states)
+            intermediates[f'layer_{i}_after_ln_2'] = hidden_states.detach()
+
+            hidden_states = block.mlp(hidden_states)
+            intermediates[f'layer_{i}_after_mlp'] = hidden_states.detach()
+
+            hidden_states = residual + hidden_states
+
+            intermediates[f'layer_{i}_exit_weights'] = hidden_states.detach()
+
+
+        hidden_states = self.ln_f(hidden_states)
+        intermediates['final_layer_norm'] = hidden_states.detach()
+
+        hidden_states = hidden_states.view(*output_shape)
+
+        # Compute logits
+        lm_logits = torch.matmul(hidden_states, self.wte.weight.transpose(-1, -2))
+        intermediates['logits'] = lm_logits.detach()
+
+        return hidden_states, intermediates
 
 # Usage
-model_name = "/home/ltl/Documents/machine_learning/gpt2/"
+model_name = "/home/lindley/Documents/machine_learning/gpt2/"
 input_string = "GPT2 is a model developed by OpenAI"
 
-
-# Compare with Hugging Face implementation
 tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-model = GPT2Model.from_pretrained(model_name)
+my_model = GPT2ModelWithIntermediates.from_pretrained(model_name)
+model = GPT2LMHeadModel.from_pretrained(model_name)
 
-tokens = tokenizer.tokenize(input_string)
-token_ids = tokenizer.convert_tokens_to_ids(tokens)
 input_ids = tokenizer.encode(input_string, return_tensors="pt")
 
-# Compare results
-print(f"Tokens: {tokens}")
-print(f"Token IDs: {token_ids}")
+# Forward pass
+outputs, intermediates = my_model(input_ids)
+
+# Print shapes and a few values for each intermediate state
+for name, tensor in intermediates.items():
+    print(f"\n{name} shape: {tensor.shape}")
+    print(f"First few values of {name}:")
+    print(tensor[0, 0, :10])
 
 
-token_embeddings = model.wte.weight[input_ids]
+# Forward pass
+outputs = model(input_ids)
+logits = outputs.logits
 
-# Get the position embeddings
-position_ids = torch.arange(0, input_ids.shape[-1]).unsqueeze(0)
-position_embeddings = model.wpe(position_ids)
+# Get the logits for the last token
+last_token_logits = logits[0, -1, :]
 
-# Print shapes and a few values
-print(f"Input IDs shape: {input_ids.shape}")
-print(f"Token embeddings shape: {token_embeddings.shape}")
-print(f"Position embeddings shape: {position_embeddings.shape}")
+# Find the index of the token with the highest probability
+next_token_id = torch.argmax(last_token_logits).item()
 
-print("\nFirst few values of token embeddings:")
-print(token_embeddings[0, 0, :10])
+# Decode the token ID to get the actual word
+next_word = tokenizer.decode([next_token_id])
 
-print("\nFirst few values of position embeddings:")
-print(position_embeddings[0, 0, :10])
+print(f"Input: {input_string}")
+print(f"Most likely next word: {next_word}")
 
-# If you want to get the combined embeddings (token + position)
-combined_embeddings = token_embeddings + position_embeddings
-print(f"\nCombined embeddings shape: {combined_embeddings.shape}")
-print("First few values of combined embeddings:")
-print(combined_embeddings[0, 0, :10])
+# If you want to see the top 5 most likely next words:
+top_5_token_ids = torch.topk(last_token_logits, k=5).indices.tolist()
+top_5_words = [tokenizer.decode([token_id]) for token_id in top_5_token_ids]
+
+print("\nTop 5 most likely next words:")
+for i, word in enumerate(top_5_words, 1):
+    print(f"{i}. {word}")

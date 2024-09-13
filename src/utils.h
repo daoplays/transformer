@@ -13,5 +13,7 @@ void allocate_and_initialize(Eigen::MatrixXf& matrix, int rows, int cols);
 
 // activation functions
 float relu(float x);
+float gelu(float x);
 
 Eigen::MatrixXf apply_relu(const Eigen::MatrixXf& X);
+Eigen::MatrixXf apply_gelu(const Eigen::MatrixXf& X);

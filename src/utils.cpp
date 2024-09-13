@@ -78,7 +78,17 @@ float relu(float x)
     return std::max(0.0f, x);
 }
 
+float gelu(float x) {
+    const float sqrt_2_over_pi = std::sqrt(2.0f / M_PI);
+    return 0.5f * x * (1.0f + std::tanh(sqrt_2_over_pi * (x + 0.044715f * std::pow(x, 3.0f))));
+}
+
 Eigen::MatrixXf apply_relu(const Eigen::MatrixXf& X)
 {
     return X.unaryExpr(&relu);
+}
+
+Eigen::MatrixXf apply_gelu(const Eigen::MatrixXf& X)
+{
+    return X.unaryExpr(&gelu);
 }
