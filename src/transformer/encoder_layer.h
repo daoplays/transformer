@@ -1,3 +1,4 @@
+#pragma once
 #include "../eigen_config.h"
 #include "feed_forward.h"
 #include "multi_head_attention.h"

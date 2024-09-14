@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include "../src/load_h5.h"
+#include "../src/gpt2.h"
 #include "../src/utils.h"
 #include "../src/vocab.h"
 #include "../src/transformer/multi_head_attention.h"

@@ -4,7 +4,7 @@
 #include "../src/transformer/feed_forward.h"  // Assume this contains your feed_forward_t class
 #include <iostream>
 #include "test_utils.h"
-#include "../src/load_h5.h"
+#include "../src/gpt2.h"
 
 // Custom approx_equal function
 bool approx_equal(float a, float b, float epsilon = 1e-6f) {
@@ -72,7 +72,6 @@ TEST_CASE("GELU function", "[gelu]") {
 TEST_CASE("Feed-Forward matches PyTorch output", "[feed_forward]") {
 
     int d_model = 768;
-    int num_heads = 12;
     int d_ff = 3072;
     int seq_length = 10;
 

@@ -2,6 +2,8 @@
 #include <cmath>
 #include <random>
 #include "logger.h"
+#include <iostream>
+#include <iomanip>
 
 void die(const string_t& message)
 {
@@ -91,4 +93,30 @@ Eigen::MatrixXf apply_relu(const Eigen::MatrixXf& X)
 Eigen::MatrixXf apply_gelu(const Eigen::MatrixXf& X)
 {
     return X.unaryExpr(&gelu);
+}
+
+
+void print_matrix_info(const Eigen::MatrixXf& matrix, const std::string& name)
+{
+    std::cout << name << " shape: " << matrix.rows() << "x" << matrix.cols() << std::endl;
+    std::cout << "First few elements of " << name << ":" << std::endl;
+    std::cout << std::setprecision(8) << std::fixed;
+    for (int i = 0; i < std::min(5, static_cast<int>(matrix.rows())); ++i) {
+        for (int j = 0; j < std::min(5, static_cast<int>(matrix.cols())); ++j) {
+            std::cout << matrix(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+void print_vector_info(const Eigen::VectorXf& vector, const std::string& name)
+{
+    std::cout << name << " size: " << vector.size() << std::endl;
+    std::cout << "First few elements of " << name << ":" << std::endl;
+    std::cout << std::setprecision(8) << std::fixed;
+    for (int i = 0; i < std::min(5, static_cast<int>(vector.size())); ++i) {
+            std::cout << vector(i)  << std::endl;
+        
+    }
 }

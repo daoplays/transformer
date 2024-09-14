@@ -4,7 +4,7 @@
 #include "../src/eigen_config.h"
 #include "../src/transformer/multi_head_attention.h"
 #include "test_utils.h"
-#include "../src/load_h5.h"
+#include "../src/gpt2.h"
 
 TEST_CASE("Attention Forward Pass", "[attention]")
 {

@@ -5,7 +5,7 @@
 #include "../src/eigen_config.h"
 #include "../src/transformer/encoder_layer.h"
 #include "test_utils.h"
-#include "../src/load_h5.h"
+#include "../src/gpt2.h"
 
 TEST_CASE("Encoder Layer Forward Pass", "[encoder_layer]")
 {

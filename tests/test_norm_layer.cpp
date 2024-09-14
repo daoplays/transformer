@@ -4,7 +4,7 @@
 #include <iostream>
 #include "../src/transformer/norm_layer.h"  // Include your LayerNorm class definition here
 #include "test_utils.h"
-#include "../src/load_h5.h"
+#include "../src/gpt2.h"
 
 using Catch::Matchers::WithinAbs;
 
