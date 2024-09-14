@@ -49,7 +49,6 @@ public:
     }
 
     MatrixXf forward(const MatrixXf& X);
-    MatrixXf forward2(const MatrixXf& X);
 
     void set_weights(const MatrixXf& q_weights, const MatrixXf& k_weights, const MatrixXf& v_weights, const VectorXf& q_bias, const VectorXf& k_bias,
                      const VectorXf& v_bias, const MatrixXf& out_proj, const VectorXf& out_bias)

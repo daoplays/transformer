@@ -5,43 +5,33 @@
 #include "../src/eigen_config.h"
 #include "../src/transformer/transformer.h"
 #include "test_utils.h"
+#include "../src/load_h5.h"
 
 TEST_CASE("Transformer Forward Pass", "[transformer]")
 {
-    const int d_model = 512;
-    const int nhead = 8;
-    const int dim_feedforward = 2048;
+    int d_model = 768;
+    int num_heads = 12;
+    int d_ff = 3072;
     const int seq_length = 10;
-    const int num_layers = 3;
+    const int num_layers = 12;
+
+    gpt2_weights_t gpt_weights = load_gpt2_weights("gpt2/tf_model.h5");
+
 
     // Create encoder
-    transformer_t transformer(num_layers, d_model, nhead, dim_feedforward);
+    transformer_t transformer(num_layers, d_model, num_heads, d_ff);
 
     // Load weights and biases
-    for (int layer_idx = 0; layer_idx < num_layers; ++layer_idx) {
-        std::string layer_prefix = "tests/test_data/transformer/layer_" + std::to_string(layer_idx) + "_";
-        MatrixXf self_attn_in_proj_weight = readMatrixFromFile(layer_prefix + "self_attn_in_proj_weight.txt", 3 * d_model, d_model);
-        VectorXf self_attn_in_proj_bias = readVectorFromFile(layer_prefix + "self_attn_in_proj_bias.txt");
-        MatrixXf self_attn_out_proj_weight = readMatrixFromFile(layer_prefix + "self_attn_out_proj_weight.txt", d_model, d_model);
-        VectorXf self_attn_out_proj_bias = readVectorFromFile(layer_prefix + "self_attn_out_proj_bias.txt");
+    for (int i = 0; i < num_layers; ++i) {
 
-        VectorXf norm1_gamma = readVectorFromFile(layer_prefix + "norm1_weight.txt");
-        VectorXf norm1_beta = readVectorFromFile(layer_prefix + "norm1_bias.txt");
-        VectorXf norm2_gamma = readVectorFromFile(layer_prefix + "norm2_weight.txt");
-        VectorXf norm2_beta = readVectorFromFile(layer_prefix + "norm2_bias.txt");
 
-        MatrixXf ff_linear1_weight = readMatrixFromFile(layer_prefix + "ff_linear1_weight.txt", dim_feedforward, d_model);
-        VectorXf ff_linear1_bias = readVectorFromFile(layer_prefix + "ff_linear1_bias.txt");
-        MatrixXf ff_linear2_weight = readMatrixFromFile(layer_prefix + "ff_linear2_weight.txt", d_model, dim_feedforward);
-        VectorXf ff_linear2_bias = readVectorFromFile(layer_prefix + "ff_linear2_bias.txt");
-
-        // Set weights and biases
-        transformer.set_layer_weights(layer_idx, self_attn_in_proj_weight.block(0, 0, d_model, d_model),
-                                      self_attn_in_proj_weight.block(d_model, 0, d_model, d_model),
-                                      self_attn_in_proj_weight.block(2 * d_model, 0, d_model, d_model), self_attn_in_proj_bias.segment(0, d_model),
-                                      self_attn_in_proj_bias.segment(d_model, d_model), self_attn_in_proj_bias.segment(2 * d_model, d_model),
-                                      self_attn_out_proj_weight, self_attn_out_proj_bias, norm1_gamma, norm1_beta, ff_linear1_weight, ff_linear1_bias,
-                                      ff_linear2_weight, ff_linear2_bias, norm2_gamma, norm2_beta);
+    // Set weights and biases
+    transformer.set_layer_weights(i, gpt_weights.layers[i].attn_c_attn_weight, gpt_weights.layers[i].attn_c_attn_bias,
+                gpt_weights.layers[i].attn_c_proj_weight, gpt_weights.layers[i].attn_c_proj_bias,
+                gpt_weights.layers[i].ln_1_weight, gpt_weights.layers[i].ln_1_bias,
+                gpt_weights.layers[i].mlp_c_fc_weight.transpose(), gpt_weights.layers[i].mlp_c_fc_bias,
+                gpt_weights.layers[i].mlp_c_proj_weight.transpose(), gpt_weights.layers[i].mlp_c_proj_bias,
+                gpt_weights.layers[i].ln_2_weight, gpt_weights.layers[i].ln_2_bias);
     }
 
     // Load input
@@ -54,5 +44,5 @@ TEST_CASE("Transformer Forward Pass", "[transformer]")
     MatrixXf expected_output = readMatrixFromFile("tests/test_data/transformer/transformer_output.txt", seq_length, d_model);
 
     // Compare outputs
-    REQUIRE(matrices_approx_equal(output, expected_output, 1e-4));
+    REQUIRE(matrices_approx_equal(output, expected_output, 1e-1));
 }

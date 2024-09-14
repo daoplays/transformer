@@ -4,6 +4,7 @@
 #include "../src/eigen_config.h"
 #include "../src/transformer/multi_head_attention.h"
 #include "test_utils.h"
+#include "../src/load_h5.h"
 
 TEST_CASE("Attention Forward Pass", "[attention]")
 {
@@ -30,7 +31,7 @@ TEST_CASE("Attention Forward Pass", "[attention]")
     Eigen::MatrixXf V = (input * value_weights.transpose()).rowwise() + value_bias.transpose();
 
     // Perform forward pass with Q, K, V
-    Eigen::MatrixXf output = attn.forward(Q, K, V);
+    Eigen::MatrixXf output = attn.forward(Q, K, V, false);
 
     // Load expected output
     Eigen::MatrixXf expected_output = readMatrixFromFile("tests/test_data/attention/output.txt", seq_length, d_model);
@@ -44,30 +45,19 @@ TEST_CASE("Attention Forward Pass", "[attention]")
 
 TEST_CASE("Multi-Head Attention matches PyTorch output", "[multi_head_attention]")
 {
-    int d_model = 512;
-    int num_heads = 8;
+    int d_model = 768;
+    int num_heads = 12;
     int seq_length = 10;
+
+    gpt2_weights_t gpt_weights = load_gpt2_weights("gpt2/tf_model.h5");
+
 
     // Create multi-head attention layer
     multi_head_attention_t mha(d_model, num_heads);
 
-    // Load weights and biases
-    Eigen::MatrixXf in_proj_weight = readMatrixFromFile("tests/test_data/multi_head_attention/mha_in_proj_weight.txt", 3 * d_model, d_model);
-    Eigen::VectorXf in_proj_bias = readVectorFromFile("tests/test_data/multi_head_attention/mha_in_proj_bias.txt");
-    Eigen::MatrixXf out_proj_weight = readMatrixFromFile("tests/test_data/multi_head_attention/mha_out_proj_weight.txt", d_model, d_model);
-    Eigen::VectorXf out_proj_bias = readVectorFromFile("tests/test_data/multi_head_attention/mha_out_proj_bias.txt");
-
-    // Split in_proj_weight and in_proj_bias into q, k, v components
-    Eigen::MatrixXf query_weights = in_proj_weight.block(0, 0, d_model, d_model);
-    Eigen::MatrixXf key_weights = in_proj_weight.block(d_model, 0, d_model, d_model);
-    Eigen::MatrixXf value_weights = in_proj_weight.block(2 * d_model, 0, d_model, d_model);
-
-    Eigen::VectorXf query_bias = in_proj_bias.segment(0, d_model);
-    Eigen::VectorXf key_bias = in_proj_bias.segment(d_model, d_model);
-    Eigen::VectorXf value_bias = in_proj_bias.segment(2 * d_model, d_model);
-
     // Set weights and biases
-    mha.set_weights(query_weights, key_weights, value_weights, query_bias, key_bias, value_bias, out_proj_weight, out_proj_bias);
+    mha.set_weights2(gpt_weights.layers[0].attn_c_attn_weight, gpt_weights.layers[0].attn_c_attn_bias,
+                    gpt_weights.layers[0].attn_c_proj_weight, gpt_weights.layers[0].attn_c_proj_bias);
 
     // Load input
     Eigen::MatrixXf input = readMatrixFromFile("tests/test_data/multi_head_attention/mha_input.txt", seq_length, d_model);

@@ -1,7 +1,7 @@
 #include "attention.h"
 #include <iostream>
 
-MatrixXf attention_t::forward(const MatrixXf& Q, const MatrixXf& K, const MatrixXf& V)
+MatrixXf attention_t::forward(const MatrixXf& Q, const MatrixXf& K, const MatrixXf& V, bool causal)
 {
 
     int d_model = Q.cols();
@@ -9,15 +9,14 @@ MatrixXf attention_t::forward(const MatrixXf& Q, const MatrixXf& K, const Matrix
     // This step allows each position to attend to all other positions
     MatrixXf scores = Q * K.transpose() / std::sqrt(d_model);
 
-    // Create and apply causal mask
-    for (int i = 0; i < scores.rows(); ++i) {
-        for (int j = i + 1; j < scores.rows(); ++j) {
-            scores(i, j) = -std::numeric_limits<float>::infinity();
+    if (causal) {
+        // Create and apply causal mask
+        for (int i = 0; i < scores.rows(); ++i) {
+            for (int j = i + 1; j < scores.rows(); ++j) {
+                scores(i, j) = -std::numeric_limits<float>::infinity();
+            }
         }
     }
-
-    //std::cout << "scores: " << scores.rows() << " " << scores.cols() << std::endl;
-    //s/td::cout << scores.row(0).head(10) << std::endl;
 
     // Apply softmax to get attention weights
     // This converts scores to probabilities, allowing for a weighted sum

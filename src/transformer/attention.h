@@ -10,5 +10,5 @@
 class attention_t {
 public:
 
-    MatrixXf forward(const MatrixXf& Q, const MatrixXf& K, const MatrixXf& V);
+    MatrixXf forward(const MatrixXf& Q, const MatrixXf& K, const MatrixXf& V, bool causal = true);
 };

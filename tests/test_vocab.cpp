@@ -39,7 +39,7 @@ TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]"
     std::vector<int> expected_tokens = {38, 11571, 17, 318, 257, 2746, 4166, 416, 4946, 20185};
     REQUIRE(tokens == expected_tokens);
 
-    GPT2_Weights gpt_weights = load_gpt2_weights("gpt2/tf_model.h5");
+    gpt2_weights_t gpt_weights = load_gpt2_weights("gpt2/tf_model.h5");
 
     REQUIRE(gpt_weights.token_embedding.rows() == 50257);
     REQUIRE(gpt_weights.token_embedding.cols() == 768);
@@ -58,7 +58,7 @@ TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]"
         }
     }
     std::cout << "after embedding" << std::endl;
-    //std::cout << embedded_tokens.row(0) << std::endl;
+    std::cout << embedded_tokens.row(0).head(10) << std::endl;
     std::cout << embedded_tokens.rows() << " " << embedded_tokens.cols() << std::endl;
 
     int d_model = 768;
@@ -80,7 +80,7 @@ TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]"
                     gpt_weights.layers[0].attn_c_proj_weight, gpt_weights.layers[0].attn_c_proj_bias);
 
     std::cout << "after attention" << std::endl;
-    MatrixXf attn_output = mha.forward2(norm1_output);
+    MatrixXf attn_output = mha.forward(norm1_output);
     std::cout << attn_output.rows() << " " << attn_output.cols() << std::endl;
     //std::cout << attn_output.row(0) << std::endl;
 
@@ -96,17 +96,17 @@ TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]"
     
     std::cout << "after layer norm2" << std::endl;
     std::cout << norm2_output.rows() << " " << norm2_output.cols() << std::endl;
-    //std::cout << norm2_output.row(0) << std::endl;
+    std::cout << norm2_output.row(0).head(10) << std::endl;
 
     feed_forward_t ff(d_model, d_ff);
     ff.set_weights(gpt_weights.layers[0].mlp_c_fc_weight.transpose(), gpt_weights.layers[0].mlp_c_proj_weight.transpose(),
                     gpt_weights.layers[0].mlp_c_fc_bias, gpt_weights.layers[0].mlp_c_proj_bias);
 
     
-    MatrixXf ff_output = ff.forward2(norm2_output);
+    MatrixXf ff_output = ff.forward(norm2_output);
     std::cout << "after ff" << std::endl;
     std::cout << ff_output.rows() << " " << ff_output.cols() << std::endl;
-    //std::cout << ff_output.row(0) << std::endl;
+    std::cout << ff_output.row(0).head(10) << std::endl;
 
 
     MatrixXf residual2 = residual1 + ff_output;
@@ -116,14 +116,14 @@ TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]"
     std::cout << residual2.row(0).head(10) << std::endl;
 
     encoder_layer_t encoder_layer(d_model, num_heads, d_ff);
-    encoder_layer.set_weights2(gpt_weights.layers[0].attn_c_attn_weight, gpt_weights.layers[0].attn_c_attn_bias,
+    encoder_layer.set_weights(gpt_weights.layers[0].attn_c_attn_weight, gpt_weights.layers[0].attn_c_attn_bias,
                     gpt_weights.layers[0].attn_c_proj_weight, gpt_weights.layers[0].attn_c_proj_bias,
                     gpt_weights.layers[0].ln_1_weight, gpt_weights.layers[0].ln_1_bias,
                     gpt_weights.layers[0].mlp_c_fc_weight.transpose(), gpt_weights.layers[0].mlp_c_fc_bias,
                     gpt_weights.layers[0].mlp_c_proj_weight.transpose(), gpt_weights.layers[0].mlp_c_proj_bias,
                     gpt_weights.layers[0].ln_2_weight, gpt_weights.layers[0].ln_2_bias);
 
-    MatrixXf encoder_output = encoder_layer.forward2(embedded_tokens);
+    MatrixXf encoder_output = encoder_layer.forward(embedded_tokens);
     std::cout << "encoder_output" << std::endl;
     std::cout << encoder_output.rows() << " " << encoder_output.cols() << std::endl;
     std::cout << encoder_output.row(0).head(10) << std::endl;
@@ -132,14 +132,14 @@ TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]"
     MatrixXf input = embedded_tokens;
     for (int i = 0; i < 12; i++) {
         encoder_layer_t encoder_layer(d_model, num_heads, d_ff);
-        encoder_layer.set_weights2(gpt_weights.layers[i].attn_c_attn_weight, gpt_weights.layers[i].attn_c_attn_bias,
+        encoder_layer.set_weights(gpt_weights.layers[i].attn_c_attn_weight, gpt_weights.layers[i].attn_c_attn_bias,
                     gpt_weights.layers[i].attn_c_proj_weight, gpt_weights.layers[i].attn_c_proj_bias,
                     gpt_weights.layers[i].ln_1_weight, gpt_weights.layers[i].ln_1_bias,
                     gpt_weights.layers[i].mlp_c_fc_weight.transpose(), gpt_weights.layers[i].mlp_c_fc_bias,
                     gpt_weights.layers[i].mlp_c_proj_weight.transpose(), gpt_weights.layers[i].mlp_c_proj_bias,
                     gpt_weights.layers[i].ln_2_weight, gpt_weights.layers[i].ln_2_bias);
 
-        input = encoder_layer.forward2(input);
+        input = encoder_layer.forward(input);
     }
     std::cout << "transformer output" << std::endl;
     std::cout << input.rows() << " " << input.cols() << std::endl;

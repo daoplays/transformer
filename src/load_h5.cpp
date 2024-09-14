@@ -60,9 +60,9 @@ void print_vector_info(const Eigen::VectorXf& vector, const std::string& name)
     }
 }
 
-GPT2_Weights load_gpt2_weights(const string_t& h5_file_path)
+gpt2_weights_t load_gpt2_weights(const string_t& h5_file_path)
 {
-    GPT2_Weights weights;
+    gpt2_weights_t weights;
     H5::H5File file(h5_file_path, H5F_ACC_RDONLY);
 
     string_t base_path = "/transformer/tfgp_t2lm_head_model/transformer/";
@@ -70,15 +70,14 @@ GPT2_Weights load_gpt2_weights(const string_t& h5_file_path)
     weights.token_embedding = read_matrix(file, base_path + "wte/weight:0");
     weights.position_embedding = read_matrix(file, base_path + "wpe/embeddings:0");
 
-    print_matrix_info(weights.token_embedding, "WTE");
-    print_matrix_info(weights.position_embedding, "WPE");
+    //print_matrix_info(weights.token_embedding, "WTE");
+    //print_matrix_info(weights.position_embedding, "WPE");
 
     // Load layers
     for (int i = 0; i < 12; ++i) {
 
         std::string layer_path = base_path + "h_._" + std::to_string(i) + "/";
-        GPT2Layer layer;
-        std::cout << layer_path << std::endl;
+        gpt2_layer_t layer;
 
         // Attention weights
         layer.attn_c_attn_weight = read_matrix(file, layer_path + "attn/c_attn/weight:0");
@@ -86,10 +85,10 @@ GPT2_Weights load_gpt2_weights(const string_t& h5_file_path)
         layer.attn_c_proj_weight = read_matrix(file, layer_path + "attn/c_proj/weight:0");
         layer.attn_c_proj_bias = read_vector(file, layer_path + "attn/c_proj/bias:0");
 
-        print_matrix_info(layer.attn_c_attn_weight, "Attention Weight");
-        print_matrix_info(layer.attn_c_proj_weight, "Attention Projection");
-        print_vector_info(layer.attn_c_attn_bias, "Attention Bias");
-        print_vector_info(layer.attn_c_proj_bias, "Attention Projection Bias");
+        //print_matrix_info(layer.attn_c_attn_weight, "Attention Weight");
+        //print_matrix_info(layer.attn_c_proj_weight, "Attention Projection");
+        //print_vector_info(layer.attn_c_attn_bias, "Attention Bias");
+        //print_vector_info(layer.attn_c_proj_bias, "Attention Projection Bias");
       
 
         // MLP weights

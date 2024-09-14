@@ -4,7 +4,12 @@
 #include "../src/transformer/feed_forward.h"  // Assume this contains your feed_forward_t class
 #include <iostream>
 #include "test_utils.h"
+#include "../src/load_h5.h"
 
+// Custom approx_equal function
+bool approx_equal(float a, float b, float epsilon = 1e-6f) {
+    return std::abs(a - b) < epsilon;
+}
 
 TEST_CASE("ReLU function", "[relu]") {
     feed_forward_t ff(10, 20);  // Dimensions don't matter for this test
@@ -40,25 +45,49 @@ TEST_CASE("Apply ReLU to matrix", "[apply_relu]") {
 }
 
 
+
+TEST_CASE("GELU function", "[gelu]") {
+
+    SECTION("GELU of positive number") {
+        REQUIRE(approx_equal(gelu(2.0f), 1.9545977116f));
+    }
+
+    SECTION("GELU of negative number") {
+        REQUIRE(approx_equal(gelu(-2.0f), -0.0454023f));
+    }
+
+    SECTION("GELU of zero") {
+        REQUIRE(approx_equal(gelu(0.0f), 0.0f));
+    }
+
+    SECTION("GELU of large positive number") {
+        REQUIRE(approx_equal(gelu(10.0f), 10.0f));
+    }
+
+    SECTION("GELU of large negative number") {
+        REQUIRE(approx_equal(gelu(-10.0f), 0.0f));
+    }
+}
+
 TEST_CASE("Feed-Forward matches PyTorch output", "[feed_forward]") {
-    int d_model = 512;
-    int d_ff = 2048;
-    int batch_size = 32;
+
+    int d_model = 768;
+    int num_heads = 12;
+    int d_ff = 3072;
     int seq_length = 10;
 
-    // Load weights and biases
-    Eigen::MatrixXf W1 = readMatrixFromFile("tests/test_data/feed_forward/w1.txt", d_ff, d_model);
-    Eigen::VectorXf b1 = readVectorFromFile("tests/test_data/feed_forward/b1.txt");
-    Eigen::MatrixXf W2 = readMatrixFromFile("tests/test_data/feed_forward/w2.txt", d_model, d_ff);
-    Eigen::VectorXf b2 = readVectorFromFile("tests/test_data/feed_forward/b2.txt");
+    
+    gpt2_weights_t gpt_weights = load_gpt2_weights("gpt2/tf_model.h5");
 
     // Create and initialize feed_forward_t
     feed_forward_t ff(d_model, d_ff);
-    ff.set_weights(W1, W2, b1, b2);
+    ff.set_weights(gpt_weights.layers[0].mlp_c_fc_weight.transpose(), gpt_weights.layers[0].mlp_c_proj_weight.transpose(),
+                    gpt_weights.layers[0].mlp_c_fc_bias, gpt_weights.layers[0].mlp_c_proj_bias);
 
-    // Load input and expected output
-    Eigen::MatrixXf input = readMatrixFromFile("tests/test_data/feed_forward/input.txt", batch_size * seq_length, d_model);
-    Eigen::MatrixXf expected_output = readMatrixFromFile("tests/test_data/feed_forward/output.txt", batch_size * seq_length, d_model);
+    MatrixXf input = readMatrixFromFile("tests/test_data/feed_forward/ff_input.txt", seq_length, d_model);
+    MatrixXf expected_output = readMatrixFromFile("tests/test_data/feed_forward/ff_output.txt", seq_length, d_model);
+
+    
 
     // Run feed-forward
     Eigen::MatrixXf output = ff.forward(input);
@@ -67,5 +96,5 @@ TEST_CASE("Feed-Forward matches PyTorch output", "[feed_forward]") {
     REQUIRE(output.rows() == expected_output.rows());
     REQUIRE(output.cols() == expected_output.cols());
 
-    REQUIRE(matrices_approx_equal(output, expected_output));
+    REQUIRE(matrices_approx_equal(output, expected_output, 1e-4));
 }

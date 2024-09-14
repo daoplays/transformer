@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import math
 
+torch.set_default_tensor_type(torch.DoubleTensor)
 
 class GPT2ModelWithIntermediates(GPT2Model):
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None):
@@ -82,10 +83,11 @@ model_name = "/home/lindley/Documents/machine_learning/gpt2/"
 input_string = "GPT2 is a model developed by OpenAI"
 
 tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-my_model = GPT2ModelWithIntermediates.from_pretrained(model_name)
-model = GPT2LMHeadModel.from_pretrained(model_name)
+my_model = GPT2ModelWithIntermediates.from_pretrained(model_name).double()
+model = GPT2LMHeadModel.from_pretrained(model_name).double()
 
-input_ids = tokenizer.encode(input_string, return_tensors="pt")
+input_ids = tokenizer.encode(input_string, return_tensors="pt").to(torch.long)
+
 
 # Forward pass
 outputs, intermediates = my_model(input_ids)

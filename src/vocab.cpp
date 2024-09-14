@@ -68,10 +68,12 @@ std::map<uint8_t, char32_t> tokenizer_t::bytes_to_unicode()
     std::vector<char32_t> cs(bs.begin(), bs.end());
     int n = 0;
     // Step 3: Handle remaining byte values (0-32, 127-160, 173)
+    // These include control characters and some extended ASCII characters that might cause issues
     for (int b = 0; b < 256; ++b) {
         if (std::find(bs.begin(), bs.end(), b) == bs.end()) {
             bs.push_back(b);
             // Map to Unicode characters starting from 256
+            // Note: we add 256 to avoid conflicts with the ASCII range
             cs.push_back(256 + n);
             ++n;
         }
