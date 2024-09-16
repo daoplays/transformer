@@ -15,7 +15,10 @@ tokenizer_t::tokenizer_t(const string_t& vocab_file, const string_t& merges_file
     vocab_stream >> vocab_json;
     for (auto it = vocab_json.begin(); it != vocab_json.end(); ++it) {
         int id = it.value();
+
+        // create the encoder entry mapping string -> int
         encoder[it.key()] = id;
+        // create the corresponding decoder entry int -> string
         decoder[id] = it.key();
     }
 
@@ -29,6 +32,7 @@ tokenizer_t::tokenizer_t(const string_t& vocab_file, const string_t& merges_file
             break;
         }
 
+        // the merges file is just space separated
         size_t split_pos = line.find(' ');
         if (split_pos == string_t::npos) {
             die("Invalid line in merges file: " + line);
@@ -37,25 +41,26 @@ tokenizer_t::tokenizer_t(const string_t& vocab_file, const string_t& merges_file
         string_t first = line.substr(0, split_pos);
         string_t second = line.substr(split_pos + 1);
 
-        // Add to bpe_ranks
-        bpe_ranks.emplace_back(first, second);
+        // Add this merge rule to merge_ranks
+        merge_ranks.emplace_back(first, second);
     }
 
     // Compile regex pattern for tokenization
     // This pattern matches various token types: contractions, words, numbers, punctuation, and whitespace
-    pat = std::regex("'s|'t|'re|'ve|'m|'ll|'d| ?[a-zA-Z]+| ?[0-9]+| ?[^\\s\\w]+|\\s+(?!\\S)|\\s+");
+    regex_splitter = std::regex("'s|'t|'re|'ve|'m|'ll|'d| ?[a-zA-Z]+| ?[0-9]+| ?[^\\s\\w]+|\\s+(?!\\S)|\\s+");
     // Initialize byte encoder/decoder
     byte_encoder = bytes_to_unicode();
 }
 
-// Function to create byte-to-unicode mapping
+// Function to create byte-to-unicode mapping for GPT-2 tokenization
 std::map<uint8_t, char32_t> tokenizer_t::bytes_to_unicode()
 {
-    // Purpose: Create a reversible mapping between byte values (0-255) and Unicode characters.
-    // The specific implementation here follows the original GPT-2 tokenizer_t's approach.
+    // Purpose: Create a specific bijective mapping between byte values (0-255) and Unicode code points.
+    // This mapping is designed to be consistent with GPT-2's original tokenization scheme.
 
     std::vector<uint8_t> bs;
     // Step 1: Add printable ASCII characters (33 to 126, i.e., '!' to '~')
+    // Note: We will handl 0-32 (and the other missing values) later
     for (int i = 33; i <= 126; ++i)
         bs.push_back(i);
     // Step 2: Add extended ASCII characters (161 - '¡' to 172 - '¬' and 174 - '®'to 255 - 'ÿ')
@@ -67,49 +72,53 @@ std::map<uint8_t, char32_t> tokenizer_t::bytes_to_unicode()
     // Create a copy of bs to store the Unicode mappings
     std::vector<char32_t> cs(bs.begin(), bs.end());
     int n = 0;
-    // Step 3: Handle remaining byte values (0-32, 127-160, 173)
-    // These include control characters and some extended ASCII characters that might cause issues
+    // Step 3: Map remaining byte values (0-32, 127-160, 173) to Unicode points starting at 256
+    // This includes control characters, space, delete, and some extended ASCII characters
+    // Mapping these to 256+ ensures:
+    // 1. Consistency with GPT-2's original tokenization scheme
+    // 2. Clear visual distinction of special characters during debugging
+    // 3. Avoidance of potential issues with the way text editors handle control characters
+    
     for (int b = 0; b < 256; ++b) {
-        if (std::find(bs.begin(), bs.end(), b) == bs.end()) {
-            bs.push_back(b);
-            // Map to Unicode characters starting from 256
-            // Note: we add 256 to avoid conflicts with the ASCII range
-            cs.push_back(256 + n);
-            ++n;
-        }
+
+        // if we have already added this byte, skip it
+        if (std::find(bs.begin(), bs.end(), b) != bs.end()) 
+            continue;
+
+        bs.push_back(b);
+        // Map to Unicode characters starting from 256
+        // Note: we add 256 to avoid conflicts with the ASCII range
+        cs.push_back(256 + n);
+        ++n;
+        
     }
 
     // Create the final mapping
+    // Note: We need to use char32_t rather than char to handle Unicode code points over 255
     std::map<uint8_t, char32_t> result;
     for (size_t i = 0; i < bs.size(); ++i) {
         result[bs[i]] = cs[i];
     }
     return result;
-
-    // Note on implementation choice:
-    // 1. This approach prioritizes printable ASCII and common extended ASCII characters.
-    // 2. It ensures these characters map to themselves, maintaining readability for common text.
-    // 3. Less common byte values (control characters, some extended ASCII) are mapped to higher Unicode points.
-    // 4. While a simple 0-255 loop would work, this method optimizes for human-readable output in common cases.
-    // 5. This specific implementation ensures compatibility with pre-trained GPT-2 models.
 }
 
 int tokenizer_t::get_pair_rank(const string_t& first, const string_t& second)
 {
-    auto it = std::find(bpe_ranks.begin(), bpe_ranks.end(), std::make_pair(first, second));
-    if (it != bpe_ranks.end()) {
-        return std::distance(bpe_ranks.begin(), it);
+    auto it = std::find(merge_ranks.begin(), merge_ranks.end(), std::make_pair(first, second));
+    if (it != merge_ranks.end()) {
+        return std::distance(merge_ranks.begin(), it);
     }
     return -1;  // Pair not found
 }
 
-std::vector<string_t> tokenizer_t::bpe(const std::u32string& token)
+// performs byte pair encoding on a UTF-32 encoded input
+std::vector<string_t> tokenizer_t::bpe(const std::u32string& input)
 {
-    // Initialize a vector of UTF-32 strings. Each string it just a single character from the input token
-    std::vector<std::u32string> word;
-    word.reserve(token.size());
-    for (char32_t c : token) {
-        word.push_back(std::u32string(1, c));
+    // Initialize a vector of UTF-32 tokens. Right now each entry it just a single character from the input, however these will potentially get merged through the BPE process
+    std::vector<std::u32string> tokens;
+    tokens.reserve(input.size());
+    for (char32_t c : input) {
+        tokens.push_back(std::u32string(1, c));
     }
 
     // Main BPE loop
@@ -118,12 +127,12 @@ std::vector<string_t> tokenizer_t::bpe(const std::u32string& token)
         int best_rank = -1;
 
         // Find the best pair to merge based on rank
-        for (size_t i = 0; i < word.size() - 1; ++i) {
+        for (size_t i = 0; i < tokens.size() - 1; ++i) {
             // Get the rank of the current pair
-            int rank = get_pair_rank(utf32_to_utf8(word[i]), utf32_to_utf8(word[i + 1]));
+            int rank = get_pair_rank(utf32_to_utf8(tokens[i]), utf32_to_utf8(tokens[i + 1]));
             // Update best_pair and best_rank if this pair is better
             if (rank != -1 && (best_rank == -1 || rank < best_rank)) {
-                best_pair = {word[i], word[i + 1]};
+                best_pair = {tokens[i], tokens[i + 1]};
                 best_rank = rank;
             }
         }
@@ -133,27 +142,27 @@ std::vector<string_t> tokenizer_t::bpe(const std::u32string& token)
             break;
         }
 
-        // Merge the best pair in the word
-        std::vector<std::u32string> new_word;
-        for (size_t i = 0; i < word.size(); ++i) {
-            if (i < word.size() - 1 && word[i] == best_pair.first && word[i + 1] == best_pair.second) {
+        // Merge the best pair of tokens
+        std::vector<std::u32string> merged_tokens;
+        for (size_t i = 0; i < tokens.size(); ++i) {
+            if (i < tokens.size() - 1 && tokens[i] == best_pair.first && tokens[i + 1] == best_pair.second) {
                 // Merge the pair
-                new_word.push_back(best_pair.first + best_pair.second);
+                merged_tokens.push_back(best_pair.first + best_pair.second);
                 ++i;  // Skip the next token as it's now merged
             } else {
                 // Keep the token as is
-                new_word.push_back(word[i]);
+                merged_tokens.push_back(tokens[i]);
             }
         }
 
         // Update word with the new merged version
-        word = std::move(new_word);
+        tokens = std::move(merged_tokens);
     }
 
-    // Convert the final word vector from UTF-32 to UTF-8
+    // Convert the final vector from UTF-32 to UTF-8
     std::vector<string_t> result;
-    for (const std::u32string& w : word) {
-        result.push_back(utf32_to_utf8(w));
+    for (const std::u32string& token : tokens) {
+        result.push_back(utf32_to_utf8(token));
     }
 
     return result;
@@ -164,10 +173,12 @@ std::vector<int> tokenizer_t::tokenize(const string_t& text)
 {
     std::vector<int> tokens;
 
-    // Use regex to split text into initial tokens
-    std::sregex_iterator iter(text.begin(), text.end(), pat);
-    std::sregex_iterator end_iter;  // Default constructor creates a past-the-end iterator
+    // Use regex to try and split text into smaller chunks
+    std::sregex_iterator iter(text.begin(), text.end(), regex_splitter);
+    // A default-constructed std::sregex_iterator represents the past-the-end iterator
+    std::sregex_iterator end_iter; 
 
+    // while there are chunks left, tokenize them
     while (iter != end_iter) {
         string_t utf8_token = iter->str();
 

@@ -24,10 +24,10 @@ private:
     std::map<string_t, int> encoder;
     // Decoder: maps IDs back to tokens
     std::map<int, string_t> decoder;
-    // BPE ranks: stores the priority of merge operations
-    std::vector<std::pair<string_t, string_t>> bpe_ranks;
-    // Regex pattern for tokenization
-    std::regex pat;
+    // merge_ranks: stores the priority of merge operations
+    std::vector<std::pair<string_t, string_t>> merge_ranks;
+    // Regex pattern for tokenization - performs initial splitting of input string
+    std::regex regex_splitter;
     // Byte-to-unicode mapping
     std::map<uint8_t, char32_t> byte_encoder;
 
@@ -62,5 +62,5 @@ public:
     // helper functions for testing
     int get_vocab_size() { return encoder.size(); };
 
-    int get_mergers_size() { return bpe_ranks.size(); };
+    int get_mergers_size() { return merge_ranks.size(); };
 };
