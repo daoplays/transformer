@@ -78,11 +78,11 @@ std::map<uint8_t, char32_t> tokenizer_t::bytes_to_unicode()
     // 1. Consistency with GPT-2's original tokenization scheme
     // 2. Clear visual distinction of special characters during debugging
     // 3. Avoidance of potential issues with the way text editors handle control characters
-    
+
     for (int b = 0; b < 256; ++b) {
 
         // if we have already added this byte, skip it
-        if (std::find(bs.begin(), bs.end(), b) != bs.end()) 
+        if (std::find(bs.begin(), bs.end(), b) != bs.end())
             continue;
 
         bs.push_back(b);
@@ -90,7 +90,6 @@ std::map<uint8_t, char32_t> tokenizer_t::bytes_to_unicode()
         // Note: we add 256 to avoid conflicts with the ASCII range
         cs.push_back(256 + n);
         ++n;
-        
     }
 
     // Create the final mapping
@@ -114,7 +113,8 @@ int tokenizer_t::get_pair_rank(const string_t& first, const string_t& second)
 // performs byte pair encoding on a UTF-32 encoded input
 std::vector<string_t> tokenizer_t::bpe(const std::u32string& input)
 {
-    // Initialize a vector of UTF-32 tokens. Right now each entry it just a single character from the input, however these will potentially get merged through the BPE process
+    // Initialize a vector of UTF-32 tokens. Right now each entry it just a single character from the input, however these will potentially get merged
+    // through the BPE process
     std::vector<std::u32string> tokens;
     tokens.reserve(input.size());
     for (char32_t c : input) {
@@ -155,7 +155,7 @@ std::vector<string_t> tokenizer_t::bpe(const std::u32string& input)
             }
         }
 
-        // Update word with the new merged version
+        // Update tokens with the new merged version
         tokens = std::move(merged_tokens);
     }
 
@@ -176,7 +176,7 @@ std::vector<int> tokenizer_t::tokenize(const string_t& text)
     // Use regex to try and split text into smaller chunks
     std::sregex_iterator iter(text.begin(), text.end(), regex_splitter);
     // A default-constructed std::sregex_iterator represents the past-the-end iterator
-    std::sregex_iterator end_iter; 
+    std::sregex_iterator end_iter;
 
     // while there are chunks left, tokenize them
     while (iter != end_iter) {
