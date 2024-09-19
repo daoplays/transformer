@@ -101,6 +101,8 @@ std::map<uint8_t, char32_t> tokenizer_t::bytes_to_unicode()
     return result;
 }
 
+
+// search the merge list for this pair of strings
 int tokenizer_t::get_pair_rank(const string_t& first, const string_t& second)
 {
     auto it = std::find(merge_ranks.begin(), merge_ranks.end(), std::make_pair(first, second));
