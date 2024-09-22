@@ -37,6 +37,7 @@ struct gpt2_weights_t {
 class gpt2_t {
 private:
 
+    static constexpr int max_seq_len = 1024;
     static constexpr int d_model = 768;
     static constexpr int num_heads = 12;
     static constexpr int d_ff = 3072;

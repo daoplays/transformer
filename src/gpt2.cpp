@@ -72,24 +72,37 @@ void gpt2_t::init()
 
 Eigen::MatrixXf gpt2_t::forward(string_t input_string)
 {
+    // get the token ids for this string from the tokenizer
     std::vector<int> tokens = tokenizer.tokenize(input_string);
 
-    Eigen::MatrixXf embedded_tokens(tokens.size(), weights.token_embedding.cols());
+    // check this doesn't exceed the maximum sequence length (1024 for GPT2)
+    if (tokens.size() > max_seq_len) {
+        die("Input token sequence is too long");
+    }
+
+    // Initialise the embedded tokens matrix with the right size for this set of tokens
+    Eigen::MatrixXf embedding_matrix = Eigen::MatrixXf::Zero(tokens.size(), d_model);
 
     for (size_t i = 0; i < tokens.size(); ++i) {
         // Check if the token ID is within the valid range
         if (tokens[i] >= 0 && tokens[i] < weights.token_embedding.rows()) {
-            embedded_tokens.row(i) = weights.token_embedding.row(tokens[i]);
-            embedded_tokens.row(i) += weights.position_embedding.row(i);
+            // for token embedding, take the row corresponding to the token ID
+            embedding_matrix.row(i) = weights.token_embedding.row(tokens[i]);
+            // for the position embedding, take the row corresponding to the position
+            // and add that to the token embedding
+            embedding_matrix.row(i) += weights.position_embedding.row(i);
         } else {
             die("Invalid token ID: " + std::to_string(tokens[i]));
         }
     }
 
-    Eigen::MatrixXf transformer_output = transformer.forward(embedded_tokens);
+    // the token embedding matrix is now ready to be passed to the transformer
+    Eigen::MatrixXf transformer_output = transformer.forward(embedding_matrix);
 
+    // pass the transformer output through the final layer normalization
     MatrixXf norm_final_output = final_norm_layer.forward(transformer_output);
 
+    // get the logits by multiplying the final output by the token embedding matrix
     MatrixXf logits = norm_final_output * weights.token_embedding.transpose();
 
     return logits;
@@ -97,14 +110,22 @@ Eigen::MatrixXf gpt2_t::forward(string_t input_string)
 
 string_t gpt2_t::get_next_max_like_token(MatrixXf& logits)
 {
+    // we only want to predict the next token after the input sequence
+    // so we take the last row of the logits matrix
     Eigen::VectorXf last_token_logits = logits.row(logits.rows() - 1);
 
+    // convert these logits to probabilities using softmax
     Eigen::VectorXf probabilities = softmax(last_token_logits);
 
+    // in this function we just want to return the token with the highest probability
+    // so we find the index of the maximum probability and return the token corresponding to that index
     Eigen::Index max_index;
     probabilities.maxCoeff(&max_index);
+    // cast the Index type to an integer
     int max_prob_token_id = static_cast<int>(max_index);
-    string_t token = tokenizer.detokenize({max_prob_token_id})[0];
+
+    // finally we detokenize the token ID to get the actual token
+    string_t token = tokenizer.detokenize(max_prob_token_id);
 
     return token;
 }

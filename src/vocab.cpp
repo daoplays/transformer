@@ -204,7 +204,7 @@ std::vector<int> tokenizer_t::tokenize(const string_t& text)
     return tokens;
 }
 
-// Helper function to convert tokens back to text (for debugging)
+// Helper function to convert tokens back to text
 std::vector<string_t> tokenizer_t::detokenize(const std::vector<int>& tokens)
 {
     std::vector<string_t> result;
@@ -215,3 +215,11 @@ std::vector<string_t> tokenizer_t::detokenize(const std::vector<int>& tokens)
 
     return result;
 }
+
+// convert a single token back to text
+string_t tokenizer_t::detokenize(const int token)
+{
+    return decoder[token];
+    
+}
+

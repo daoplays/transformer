@@ -18,7 +18,10 @@ void die(const string_t& message)
 // Used in attention mechanism to convert scores to probabilities
 VectorXf softmax(const VectorXf& x)
 {
+    // use the standard trick of subtracting the maximum value to avoid overflow
     VectorXf exp_x = (x.array() - x.maxCoeff()).exp();
+    // return the normalized values
+    // the sum of the values will be 1 so they can be interpreted as probabilities
     return exp_x.array() / exp_x.sum();
 }
 

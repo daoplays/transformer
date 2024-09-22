@@ -58,6 +58,7 @@ public:
     // Tokenize input text
     std::vector<int> tokenize(const string_t& text);
     std::vector<string_t> detokenize(const std::vector<int>& tokens);
+    string_t detokenize(const int token);
 
     // helper functions for testing
     int get_vocab_size() { return encoder.size(); };
