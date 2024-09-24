@@ -1,9 +1,9 @@
 #pragma once
 #include "eigen_config.h"
-#include "transformer/transformer.h"
-#include "transformer/norm_layer.h"
-#include "vocab.h"
 #include "load_h5.h"
+#include "tokenizer.h"
+#include "transformer/norm_layer.h"
+#include "transformer/transformer.h"
 
 struct gpt2_layer_t {
     // Attention weights
@@ -30,8 +30,8 @@ struct gpt2_weights_t {
     Eigen::MatrixXf position_embedding;
 
     std::vector<gpt2_layer_t> layers;
-    Eigen::VectorXf ln_f_weight;  
-    Eigen::VectorXf ln_f_bias;   
+    Eigen::VectorXf ln_f_weight;
+    Eigen::VectorXf ln_f_bias;
 };
 
 class gpt2_t {
@@ -51,21 +51,18 @@ private:
 
 public:
 
-    gpt2_t() : transformer(num_layers, d_model, num_heads, d_ff), tokenizer("gpt2/vocab.json", "gpt2/merges.txt"), final_norm_layer(d_model, 1e-5) {
-        
-    };
+    gpt2_t()
+        : transformer(num_layers, d_model, num_heads, d_ff), tokenizer("gpt2/vocab.json", "gpt2/merges.txt"), final_norm_layer(d_model, 1e-5) {
+
+          };
 
     void init();
 
-    
     Eigen::MatrixXf forward(string_t input_string);
 
-    gpt2_weights_t get_weights() {
-        return weights;
-    }
+    gpt2_weights_t get_weights() { return weights; }
 
-    string_t get_next_max_like_token(MatrixXf & logits);
-    
+    string_t get_next_max_like_token(MatrixXf& logits);
 };
 
-    gpt2_weights_t load_gpt2_weights(const string_t& h5_file_path);
+gpt2_weights_t load_gpt2_weights(const string_t& h5_file_path);

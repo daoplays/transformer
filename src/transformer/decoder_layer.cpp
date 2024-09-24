@@ -1,6 +1,6 @@
-#include "encoder_layer.h"
+#include "decoder_layer.h"
 
-MatrixXf encoder_layer_t::forward(const MatrixXf& X)
+MatrixXf decoder_layer_t::forward(const MatrixXf& X)
 {
     // Layer Norm 1
     MatrixXf norm1_output = norm1.forward(X);

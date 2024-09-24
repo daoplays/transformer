@@ -3,11 +3,11 @@
 #include <fstream>
 #include <vector>
 #include "../src/eigen_config.h"
-#include "../src/transformer/encoder_layer.h"
-#include "test_utils.h"
 #include "../src/gpt2.h"
+#include "../src/transformer/decoder_layer.h"
+#include "test_utils.h"
 
-TEST_CASE("Encoder Layer Forward Pass", "[encoder_layer]")
+TEST_CASE("Decoder Layer Forward Pass", "[encoder_layer]")
 {
     int d_model = 768;
     int num_heads = 12;
@@ -17,23 +17,20 @@ TEST_CASE("Encoder Layer Forward Pass", "[encoder_layer]")
     gpt2_weights_t gpt_weights = load_gpt2_weights("gpt2/tf_model.h5");
 
     // Create encoder layer
-    encoder_layer_t encoder_layer(d_model, num_heads, d_ff);
+    decoder_layer_t decoder_layer(d_model, num_heads, d_ff);
 
     // Set weights and biases
-    encoder_layer.set_weights(gpt_weights.layers[0].attn_c_attn_weight, gpt_weights.layers[0].attn_c_attn_bias,
-                    gpt_weights.layers[0].attn_c_proj_weight, gpt_weights.layers[0].attn_c_proj_bias,
-                    gpt_weights.layers[0].ln_1_weight, gpt_weights.layers[0].ln_1_bias,
-                    gpt_weights.layers[0].mlp_c_fc_weight.transpose(), gpt_weights.layers[0].mlp_c_fc_bias,
-                    gpt_weights.layers[0].mlp_c_proj_weight.transpose(), gpt_weights.layers[0].mlp_c_proj_bias,
-                    gpt_weights.layers[0].ln_2_weight, gpt_weights.layers[0].ln_2_bias);
-
+    decoder_layer.set_weights(gpt_weights.layers[0].attn_c_attn_weight, gpt_weights.layers[0].attn_c_attn_bias,
+                              gpt_weights.layers[0].attn_c_proj_weight, gpt_weights.layers[0].attn_c_proj_bias, gpt_weights.layers[0].ln_1_weight,
+                              gpt_weights.layers[0].ln_1_bias, gpt_weights.layers[0].mlp_c_fc_weight.transpose(), gpt_weights.layers[0].mlp_c_fc_bias,
+                              gpt_weights.layers[0].mlp_c_proj_weight.transpose(), gpt_weights.layers[0].mlp_c_proj_bias,
+                              gpt_weights.layers[0].ln_2_weight, gpt_weights.layers[0].ln_2_bias);
 
     // Load input
     MatrixXf input = readMatrixFromFile("tests/test_data/encoder/encoder_input.txt", seq_length, d_model);
 
-
     // Perform forward pass
-    MatrixXf output = encoder_layer.forward(input);
+    MatrixXf output = decoder_layer.forward(input);
 
     MatrixXf pytorch_final_output = readMatrixFromFile("tests/test_data/encoder/encoder_output.txt", seq_length, d_model);
 

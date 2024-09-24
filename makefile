@@ -30,7 +30,7 @@ LDFLAGS += -lm -lpthread -ldl -L$(H5_LIB) -lhdf5_cpp -lhdf5
 COMMON_SRC := $(wildcard src/transformer/*.cpp) \
  		      $(wildcard src/types/*.cpp) \
               src/utils.cpp src/argument_parser.cpp src/logger.cpp \
-			  src/vocab.cpp src/load_h5.cpp src/gpt2.cpp
+			  src/tokenizer.cpp src/load_h5.cpp src/gpt2.cpp
                
 
 SRCS := src/main.cpp $(COMMON_SRC)

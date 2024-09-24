@@ -3,11 +3,11 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include "../src/gpt2.h"
-#include "../src/utils.h"
-#include "../src/vocab.h"
+#include "../src/tokenizer.h"
+#include "../src/transformer/decoder_layer.h"
 #include "../src/transformer/multi_head_attention.h"
-#include "../src/transformer/encoder_layer.h"
 #include "../src/transformer/norm_layer.h"  // Include your LayerNorm class definition here
+#include "../src/utils.h"
 
 TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]")
 {
@@ -38,5 +38,4 @@ TEST_CASE("Vocabulary loader correctly loads GPT-2 vocabulary", "[vocab_loader]"
     // expected tokens from the hugging face python api
     std::vector<int> expected_tokens = {38, 11571, 17, 318, 257, 2746, 4166, 416, 4946, 20185};
     REQUIRE(tokens == expected_tokens);
-
 }

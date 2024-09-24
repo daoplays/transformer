@@ -2,14 +2,14 @@
 
 #include <vector>
 #include "../eigen_config.h"
-#include "encoder_layer.h"
+#include "decoder_layer.h"
 
 // transformer_t class
 // This stacks multiple Encoder Layers
 class transformer_t {
 private:
 
-    std::vector<encoder_layer_t> layers;
+    std::vector<decoder_layer_t> layers;
 
 public:
 
@@ -23,9 +23,9 @@ public:
 
     MatrixXf forward(const MatrixXf& X);
 
-    void set_layer_weights(const int layer_idx, const MatrixXf& self_attn_qkv_weight,  const VectorXf& self_attn_qkv_bias, 
-                           const MatrixXf& self_attn_out_proj_weight, const VectorXf& self_attn_out_proj_bias,
-                           const VectorXf& norm1_gamma, const VectorXf& norm1_beta, const MatrixXf& ff_linear1_weight,
-                           const VectorXf& ff_linear1_bias, const MatrixXf& ff_linear2_weight, const VectorXf& ff_linear2_bias,
-                           const VectorXf& norm2_gamma, const VectorXf& norm2_beta);
+    void set_layer_weights(const int layer_idx, const MatrixXf& self_attn_qkv_weight, const VectorXf& self_attn_qkv_bias,
+                           const MatrixXf& self_attn_out_proj_weight, const VectorXf& self_attn_out_proj_bias, const VectorXf& norm1_gamma,
+                           const VectorXf& norm1_beta, const MatrixXf& ff_linear1_weight, const VectorXf& ff_linear1_bias,
+                           const MatrixXf& ff_linear2_weight, const VectorXf& ff_linear2_bias, const VectorXf& norm2_gamma,
+                           const VectorXf& norm2_beta);
 };

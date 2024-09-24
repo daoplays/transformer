@@ -1,4 +1,4 @@
-#include "vocab.h"
+#include "tokenizer.h"
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -100,7 +100,6 @@ std::map<uint8_t, char32_t> tokenizer_t::bytes_to_unicode()
     }
     return result;
 }
-
 
 // search the merge list for this pair of strings
 int tokenizer_t::get_pair_rank(const string_t& first, const string_t& second)
@@ -220,6 +219,4 @@ std::vector<string_t> tokenizer_t::detokenize(const std::vector<int>& tokens)
 string_t tokenizer_t::detokenize(const int token)
 {
     return decoder[token];
-    
 }
-
